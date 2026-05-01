@@ -1,6 +1,6 @@
 import ReconnectingWebSocket from 'reconnecting-websocket'
-import { useAuthStore } from './store/authStore'
-import { useWsStore } from './store/wsStore'
+import { useAuthStore } from '@/store/authStore'
+import { useWsStore } from '@/store/wsStore'
 
 let ws: ReconnectingWebSocket | null = null
 

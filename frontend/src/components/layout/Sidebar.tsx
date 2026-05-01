@@ -8,7 +8,6 @@ import {
   TrendingUp,
   Newspaper,
   ScrollText,
-  Settings,
   LogOut,
   Zap
 } from "lucide-react"

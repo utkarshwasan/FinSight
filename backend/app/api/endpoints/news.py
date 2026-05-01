@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 @router.get("/{symbol}", response_model=list[schemas.NewsItem])
-async def get_news(symbol: str, limit: int = 5, db: DBDep = None):
+async def get_news(symbol: str, db: DBDep, limit: int = 5):
     result = await db.execute(
         select(models.NewsItem)
         .where(models.NewsItem.symbol == symbol.upper())

@@ -25,7 +25,7 @@ async def get_latest_quote(symbol: str, db: DBDep):
 
 
 @router.get("/{symbol}/history", response_model=list[schemas.QuoteTick])
-async def get_quote_history(symbol: str, period: str = "1mo", db: DBDep = None):
+async def get_quote_history(symbol: str, db: DBDep, period: str = "1mo"):
     # Map period to days
     period_map = {"1d": 1, "1wk": 7, "1mo": 30, "3mo": 90, "1y": 365}
     days = period_map.get(period, 30)

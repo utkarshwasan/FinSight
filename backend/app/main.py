@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import auth, users, watchlist, positions, quotes, news, ws
+from app.api.endpoints import auth, users, watchlist, positions, quotes, news, ws, query, forecast, audit
 
 app = FastAPI(
     title="FinSight AI",
@@ -33,7 +33,11 @@ app.include_router(watchlist.router, prefix="/watchlist", tags=["watchlist"])
 app.include_router(positions.router, prefix="/positions", tags=["positions"])
 app.include_router(quotes.router, prefix="/quotes", tags=["quotes"])
 app.include_router(news.router, prefix="/news", tags=["news"])
+app.include_router(query.router, prefix="/query", tags=["query"])
+app.include_router(forecast.router, prefix="/forecast", tags=["forecast"])
+app.include_router(audit.router, prefix="/audit", tags=["audit"])
 app.include_router(ws.router, tags=["websocket"])
+
 
 
 @app.get("/healthz", tags=["health"])

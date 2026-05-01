@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, EmailStr, ConfigDict
 
 class UserBase(BaseModel):
@@ -48,6 +48,15 @@ class Position(PositionBase):
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+class PositionOut(Position):
+    unrealized_pnl: Optional[float] = None
+    unrealized_pnl_pct: Optional[float] = None
+    current_price: Optional[float] = None
+
+class ForecastOut(BaseModel):
+    forecast: List[dict[str, Any]]
+    mape: float
 
 class QuoteTick(BaseModel):
     ts: datetime

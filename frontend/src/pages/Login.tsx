@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { setAuth } = useAuthStore()
+  const { login } = useAuthStore()
   const navigate = useNavigate()
   const emailRef = useRef<HTMLInputElement>(null)
 
@@ -35,7 +35,7 @@ export default function LoginPage() {
       const me = await api.get('/users/me', {
         headers: { Authorization: `Bearer ${data.access_token}` },
       })
-      setAuth(data.access_token, me.data)
+      login(data.access_token, me.data)
       connectWS()
       navigate('/')
     } catch {

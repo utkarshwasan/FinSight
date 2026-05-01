@@ -2,12 +2,37 @@ import { useWsStore } from "@/store/wsStore"
 import { useAuthStore } from "@/store/authStore"
 import { useQuery } from "@tanstack/react-query"
 import api from "@/lib/api"
-import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState, useMemo } from "react"
 import {
-  TrendingUp, TrendingDown, Minus,
-  Activity, Cpu, BarChart3, Zap,
+  TrendingUp, TrendingDown,
+  Activity, Cpu, Sparkles, Plus,
   ArrowUpRight, Clock
 } from "lucide-react"
+
+import DAGVisualizer from "@/components/dag/DAGVisualizer"
+import NLQueryBar from "@/components/query/NLQueryBar"
+import AnswerPanel from "@/components/query/AnswerPanel"
+import HoldingsCard from "@/components/positions/HoldingsCard"
+import AddPositionForm from "@/components/positions/AddPositionForm"
+import CandleChart from "@/components/charts/CandleChart"
+
+function generateDummyData() {
+  const data = []
+  const now = new Date()
+  for (let i = 30; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const base = 180 + Math.random() * 20
+    data.push({
+      time: d.toISOString().split('T')[0],
+      open: base,
+      high: base + Math.random() * 5,
+      low: base - Math.random() * 5,
+      close: base + Math.random() * 2 - 1
+    })
+  }
+  return data
+}
 
 // ── Stat card ──
 function StatCard({ symbol, price, change, changeVal, volume }: {
@@ -35,7 +60,6 @@ function StatCard({ symbol, price, change, changeVal, volume }: {
       className="glass-card glass-card-hover"
       style={{ padding: "20px 22px", cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
-      {/* Subtle top border glow on positive */}
       {positive && (
         <div style={{
           position: "absolute", top: 0, left: 0, right: 0, height: 1,
@@ -88,42 +112,6 @@ function StatCard({ symbol, price, change, changeVal, volume }: {
   )
 }
 
-// ── Activity row ──
-function ActivityRow({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
-  return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "10px 0", borderBottom: "1px solid var(--border)",
-    }}>
-      <div>
-        <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{label}</p>
-        {sub && <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{sub}</p>}
-      </div>
-      <span style={{
-        fontSize: 13, fontWeight: 600,
-        color: accent ? "#818CF8" : "var(--text-secondary)",
-      }}>{value}</span>
-    </div>
-  )
-}
-
-// ── Mini sparkline ──
-function Sparkline({ values, positive }: { values: number[]; positive: boolean }) {
-  const w = 80, h = 32
-  if (values.length < 2) return null
-  const min = Math.min(...values), max = Math.max(...values)
-  const range = max - min || 1
-  const pts = values.map((v, i) =>
-    `${(i / (values.length - 1)) * w},${h - ((v - min) / range) * h}`
-  ).join(" ")
-  const color = positive ? "#10B981" : "#EF4444"
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: "block" }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
 const TICKERS = [
   { symbol: "AAPL",  base: 189.30, change: 1.24, volume: "87M" },
   { symbol: "TSLA",  base: 245.67, change: -0.83, volume: "124M" },
@@ -134,25 +122,63 @@ const TICKERS = [
 export default function OverviewPage() {
   const quoteTicks = useWsStore((s) => s.quoteTicks)
   const connected  = useWsStore((s) => s.connected)
+  const dagEvents  = useWsStore((s) => s.dagEvents)
   const user = useAuthStore((s) => s.user)
   const [time, setTime] = useState(new Date())
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null)
+  const [showAddPosition, setShowAddPosition] = useState(false)
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
 
-  // Watchlist query
   const { data: watchlist } = useQuery({
     queryKey: ["watchlist"],
     queryFn: () => api.get("/watchlist").then((r) => r.data),
     retry: false,
   })
 
+  const { data: positions } = useQuery({
+    queryKey: ["positions"],
+    queryFn: () => api.get("/positions").then((r) => r.data),
+    retry: false,
+  })
+
+  const { data: forecastData } = useQuery({
+    queryKey: ["forecast", "AAPL"],
+    queryFn: () => api.get("/forecast/AAPL").then((r) => r.data),
+    enabled: connected,
+  })
+
+  const candleData = useMemo(() => generateDummyData(), [])
+  const hasLiveAapl = Boolean(quoteTicks.AAPL)
+
+  const formattedForecast = useMemo(() => {
+    if (!forecastData?.forecast) return []
+    return forecastData.forecast.map((f: { ts: string, yhat: number }) => ({
+      time: f.ts.split('T')[0],
+      value: f.yhat
+    }))
+  }, [forecastData])
+
+  const synthesisEvent = useMemo(() => {
+    if (!currentRunId) return null
+    return [...dagEvents].reverse().find(e => e.run_id === currentRunId && e.node === 'Synthesis')
+  }, [dagEvents, currentRunId])
+
+  const currentAnswer = synthesisEvent?.partial_output || null
+  const isGenerating = currentRunId !== null && !currentAnswer && [...dagEvents].reverse().find(e => e.run_id === currentRunId && e.status === 'error') === undefined
+
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
+      
+      {showAddPosition && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <AddPositionForm onClose={() => setShowAddPosition(false)} />
+        </div>
+      )}
 
-      {/* ── Page header ── */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
           <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#818CF8", marginBottom: 6 }}>
@@ -167,31 +193,39 @@ export default function OverviewPage() {
           </p>
         </div>
 
-        {/* Live badge */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "6px 12px",
-          background: connected ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.04)",
-          border: `1px solid ${connected ? "rgba(16,185,129,0.25)" : "var(--border)"}`,
-          borderRadius: 8,
-        }}>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowAddPosition(true)}
+            className="px-4 py-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold transition-all border border-indigo-400/30 shadow-[0_8px_24px_rgba(99,102,241,0.25)] flex items-center gap-2"
+          >
+            <Plus size={16} />
+            Add Position
+          </button>
+          
           <div style={{
-            width: 6, height: 6, borderRadius: "50%",
-            background: connected ? "var(--green)" : "var(--text-muted)",
-            boxShadow: connected ? "0 0 8px var(--green)" : "none",
-            animation: connected ? "pulse 2s infinite" : "none",
-          }} />
-          <span style={{ fontSize: 11, fontWeight: 600, color: connected ? "var(--green)" : "var(--text-muted)" }}>
-            {connected ? "LIVE" : "OFFLINE"}
-          </span>
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 12px",
+            background: connected ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.04)",
+            border: `1px solid ${connected ? "rgba(16,185,129,0.25)" : "var(--border)"}`,
+            borderRadius: 8,
+          }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: connected ? "var(--green)" : "var(--text-muted)",
+              boxShadow: connected ? "0 0 8px var(--green)" : "none",
+              animation: connected ? "pulse 2s infinite" : "none",
+            }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: connected ? "var(--green)" : "var(--text-muted)" }}>
+              {connected ? "LIVE" : "OFFLINE"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* ── Stat cards ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
         {TICKERS.map((t) => {
-          const live = quoteTicks[t.symbol]
-          const price = live ? live.price : t.base
+          const live = quoteTicks[t.symbol as keyof typeof quoteTicks]
+          const price = live ? (live as unknown as { price: number }).price : t.base
           const changeVal = (t.change / 100) * t.base
           return (
             <StatCard
@@ -206,94 +240,59 @@ export default function OverviewPage() {
         })}
       </div>
 
+      <div className="grid grid-cols-[1fr_380px] gap-6">
+        <div className="flex flex-col gap-6">
+           <div className="glass-card p-4 h-[450px]">
+              <CandleChart 
+                symbol="AAPL" 
+                data={candleData} 
+                forecast={formattedForecast} 
+              />
+              {!hasLiveAapl && (
+                <p className="mt-2 text-[11px] text-slate-500">
+                  Showing demo candles until live ticks arrive.
+                </p>
+              )}
+           </div>
+           
+           <div className="glass-card p-5 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <Sparkles size={18} className="text-indigo-400" />
+                <h2 className="text-lg font-semibold text-white">AI Copilot</h2>
+              </div>
+              <p className="text-xs text-slate-400">
+                Ask a question to run the DAG and generate a cited response.
+              </p>
+              <NLQueryBar onRunStarted={setCurrentRunId} />
+              <AnswerPanel answer={currentAnswer} isGenerating={isGenerating} />
+           </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+           <div className="glass-card p-5 h-full">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Pipeline Execution</h3>
+              {currentRunId ? (
+                <DAGVisualizer events={dagEvents} currentRunId={currentRunId} />
+              ) : (
+                <div className="h-[420px] flex flex-col items-center justify-center text-slate-500 gap-4 border-2 border-dashed border-slate-800 rounded-xl">
+                  <Cpu size={40} className="opacity-20" />
+                  <p className="text-xs text-center max-w-[220px]">
+                    Submit a query from AI Copilot to start DAG execution.
+                  </p>
+                </div>
+              )}
+           </div>
+        </div>
+      </div>
+
       {/* ── Two column layout ── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20 }}>
 
         {/* Portfolio summary */}
-        <div className="glass-card" style={{ padding: "22px 24px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <BarChart3 size={16} color="#818CF8" />
-              <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Portfolio Summary</h2>
-            </div>
-            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Last 30 days</span>
-          </div>
-
-          {/* Big P&L number */}
-          <div style={{ marginBottom: 24 }}>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Unrealized P&L</p>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-              <span style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-0.04em", color: "#10B981", fontVariantNumeric: "tabular-nums" }}>
-                +$2,847.30
-              </span>
-              <span style={{ fontSize: 14, color: "var(--green)", fontWeight: 600 }}>+8.4%</span>
-            </div>
-          </div>
-
-          {/* Holdings bar */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Allocation</span>
-              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>$36,850 total</span>
-            </div>
-            <div style={{ height: 6, background: "var(--bg-raised)", borderRadius: 99, overflow: "hidden", display: "flex" }}>
-              {[
-                { color: "#6366F1", width: "35%" },
-                { color: "#10B981", width: "28%" },
-                { color: "#D97706", width: "22%" },
-                { color: "#818CF8", width: "15%" },
-              ].map((s, i) => (
-                <div key={i} style={{ width: s.width, background: s.color }} />
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-              {["NVDA", "AAPL", "TSLA", "MSFT"].map((sym, i) => (
-                <div key={sym} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: 2, background: ["#6366F1","#10B981","#D97706","#818CF8"][i] }} />
-                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{sym}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Activity rows */}
-          <ActivityRow label="AAPL × 10 @ $175"  value="+$143.00" sub="Current: $189.30" accent />
-          <ActivityRow label="NVDA × 5 @ $820"   value="+$276.00" sub="Current: $875.20" accent />
-          <ActivityRow label="TSLA × 8 @ $230"   value="+$125.36" sub="Current: $245.67" accent />
-          <div style={{ paddingBottom: 0 }}>
-            <ActivityRow label="Total invested" value="$33,900" />
-          </div>
-        </div>
+        <HoldingsCard positions={positions || []} />
 
         {/* Right column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* AI pipeline status */}
-          <div className="glass-card" style={{ padding: "18px 20px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <Cpu size={15} color="#818CF8" />
-              <h2 style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>AI Pipeline</h2>
-            </div>
-            {["MarketData", "News", "Forecast", "Risk", "Alert"].map((node, i) => (
-              <div key={node} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "7px 0",
-                borderBottom: i < 4 ? "1px solid var(--border)" : "none",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: i === 0 ? "var(--green)" : i < 3 ? "#818CF8" : "var(--text-muted)",
-                    boxShadow: i === 0 ? "0 0 6px var(--green)" : "none",
-                  }} />
-                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{node}</span>
-                </div>
-                <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
-                  {i === 0 ? "idle" : "standby"}
-                </span>
-              </div>
-            ))}
-          </div>
 
           {/* Watchlist summary */}
           <div className="glass-card" style={{ padding: "18px 20px", flex: 1 }}>
@@ -302,7 +301,7 @@ export default function OverviewPage() {
               <h2 style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Watchlist</h2>
             </div>
             {watchlist?.length ? (
-              watchlist.slice(0, 5).map((item: any) => (
+              watchlist.slice(0, 5).map((item: { id: number, symbol: string }) => (
                 <div key={item.id} style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "7px 0", borderBottom: "1px solid var(--border)",

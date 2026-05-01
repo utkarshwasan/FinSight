@@ -1,45 +1,61 @@
-from fastapi import APIRouter, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
+from typing import List
+from app.db import get_db
 from app.api.deps import CurrentUser, DBDep
-from app import schemas, models
+from app import models, schemas
 
 router = APIRouter()
 
-
-@router.get("/", response_model=list[schemas.Position])
-async def list_positions(user: CurrentUser, db: DBDep):
+@router.get("/", response_model=List[schemas.PositionOut])
+async def get_positions(
+    db: DBDep,
+    current_user: CurrentUser
+):
     result = await db.execute(
-        select(models.Position).where(models.Position.user_id == user.id)
+        select(models.Position).where(models.Position.user_id == current_user.id)
     )
-    return result.scalars().all()
+    positions = result.scalars().all()
+    
+    # In a real app, we would fetch current prices here to compute P&L
+    # For now, return basic data; the frontend will compute live P&L via WS
+    return positions
 
-
-@router.post("/", response_model=schemas.Position, status_code=201)
-async def create_position(pos: schemas.PositionCreate, user: CurrentUser, db: DBDep):
-    if pos.quantity <= 0:
+@router.post("/", response_model=schemas.Position, status_code=status.HTTP_201_CREATED)
+async def create_position(
+    position_in: schemas.PositionCreate,
+    db: DBDep,
+    current_user: CurrentUser
+):
+    if position_in.quantity <= 0:
         raise HTTPException(status_code=422, detail="Quantity must be positive")
-
-    db_pos = models.Position(
-        user_id=user.id,
-        symbol=pos.symbol.upper(),
-        quantity=pos.quantity,
-        average_price=pos.average_price,
+        
+    db_position = models.Position(
+        **position_in.model_dump(),
+        user_id=current_user.id
     )
-    db.add(db_pos)
+    db.add(db_position)
     await db.commit()
-    await db.refresh(db_pos)
-    return db_pos
+    await db.refresh(db_position)
+    return db_position
 
-
-@router.delete("/{pos_id}", status_code=204)
-async def delete_position(pos_id: int, user: CurrentUser, db: DBDep):
+@router.delete("/{position_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_position(
+    position_id: int,
+    db: DBDep,
+    current_user: CurrentUser
+):
     result = await db.execute(
-        select(models.Position).where(models.Position.id == pos_id)
+        select(models.Position).where(
+            models.Position.id == position_id,
+            models.Position.user_id == current_user.id
+        )
     )
-    pos = result.scalar_one_or_none()
-    if not pos:
+    db_position = result.scalar_one_or_none()
+    if not db_position:
         raise HTTPException(status_code=404, detail="Position not found")
-    if pos.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Not your position")
-    await db.delete(pos)
+        
+    await db.delete(db_position)
     await db.commit()
+    return None
