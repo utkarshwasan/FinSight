@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/authStore'
 import { connectWS } from '@/lib/ws'
 import api from '@/lib/api'
+import { Zap, TrendingUp, Shield, Activity } from 'lucide-react'
+import { useState } from 'react'
+
+const features = [
+  { icon: Activity, label: "Real-Time Data",    desc: "Live market ticks every 15s via WebSocket" },
+  { icon: TrendingUp, label: "AI Forecasting",  desc: "Prophet + Gemini 7-day price projections" },
+  { icon: Shield,   label: "Risk Analysis",     desc: "Multi-node DAG risk scoring engine" },
+]
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -13,6 +19,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const { setAuth } = useAuthStore()
   const navigate = useNavigate()
+  const emailRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { emailRef.current?.focus() }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,7 +32,6 @@ export default function LoginPage() {
       params.append('username', email)
       params.append('password', password)
       const { data } = await api.post('/auth/login', params)
-      // Fetch user info
       const me = await api.get('/users/me', {
         headers: { Authorization: `Bearer ${data.access_token}` },
       })
@@ -31,109 +39,223 @@ export default function LoginPage() {
       connectWS()
       navigate('/')
     } catch {
-      setError('Invalid credentials. Try demo@finsight.ai / Demo@12345')
+      setError('Invalid credentials')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      {/* Background glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl" />
-      </div>
+    <div style={{
+      minHeight: "100dvh",
+      background: "var(--bg-base)",
+      display: "flex",
+      fontFamily: "var(--font-sans)",
+    }}>
+      {/* Left panel — branding */}
+      <div style={{
+        flex: 1,
+        padding: "48px 56px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        borderRight: "1px solid var(--border)",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Ambient glow */}
+        <div style={{
+          position: "absolute", top: -100, left: -100,
+          width: 500, height: 500,
+          background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 65%)",
+          borderRadius: "50%", filter: "blur(60px)", pointerEvents: "none",
+        }} />
 
-      <div className="relative w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/30">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-              FinSight AI
-            </span>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: "linear-gradient(135deg, #6366F1, #4F46E5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 20px rgba(99,102,241,0.45)",
+          }}>
+            <Zap size={18} color="#fff" />
           </div>
-          <p className="text-slate-400 text-sm">Real-Time Financial Intelligence</p>
+          <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.03em" }}>
+            <span className="glow-text-accent">Fin</span>
+            <span style={{ color: "var(--text-primary)" }}>Sight</span>
+          </span>
         </div>
 
-        <Card className="bg-slate-900/80 backdrop-blur-xl border-slate-800 shadow-2xl">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl text-white">Sign in</CardTitle>
-            <CardDescription className="text-slate-400">
-              Access your AI-powered dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-slate-300">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="demo@finsight.ai"
-                  required
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-slate-300">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </div>
+        {/* Main copy */}
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#818CF8", marginBottom: 16 }}>
+            AI-POWERED TRADING INTELLIGENCE
+          </p>
+          <h2 style={{ fontSize: 40, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.04em", color: "var(--text-primary)", marginBottom: 20 }}>
+            Real-time insights<br />
+            <span className="glow-text-accent">for every trade.</span>
+          </h2>
+          <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.65, maxWidth: 380, marginBottom: 40 }}>
+            5-node AI pipeline that analyses market data, news sentiment, and price forecasts — all streaming live to your dashboard.
+          </p>
 
-              {error && (
-                <div className="p-3 bg-rose-950/50 border border-rose-800 rounded-lg text-rose-400 text-sm">
-                  {error}
+          {/* Features */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {features.map((f) => (
+              <div key={f.label} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: "var(--accent-dim)",
+                  border: "1px solid rgba(99,102,241,0.2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <f.icon size={14} color="#818CF8" />
                 </div>
-              )}
-
-              <Button
-                id="login-btn"
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium h-11 transition-all shadow-lg shadow-blue-600/20"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Authenticating...
-                  </span>
-                ) : 'Sign in'}
-              </Button>
-
-              <div className="pt-2 border-t border-slate-800">
-                <p className="text-xs text-center text-slate-500">
-                  Demo: <span className="text-slate-400 font-mono">demo@finsight.ai</span> / <span className="text-slate-400 font-mono">Demo@12345</span>
-                </p>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{f.label}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>{f.desc}</p>
+                </div>
               </div>
-            </form>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
 
-        <p className="mt-6 text-center text-xs text-slate-600">
-          ⚠ Educational use only. Not financial advice. — Nebula9.ai Assessment
+        {/* Footer */}
+        <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
+          ⚠ Educational use only · Not financial advice · Nebula9.ai Assessment
         </p>
       </div>
+
+      {/* Right panel — form */}
+      <div style={{
+        width: 440,
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        padding: "48px 48px",
+      }}>
+        <div style={{ marginBottom: 40 }}>
+          <h3 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 6 }}>
+            Sign in
+          </h3>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            Access your AI-powered dashboard
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label htmlFor="login-email" style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 6 }}>
+              Email address
+            </label>
+            <input
+              id="login-email"
+              ref={emailRef}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="demo@finsight.ai"
+              required
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                color: "var(--text-primary)",
+                fontSize: 14,
+                outline: "none",
+                transition: "border-color 150ms",
+                fontFamily: "inherit",
+              }}
+              onFocus={(e) => { e.target.style.borderColor = "var(--accent)" }}
+              onBlur={(e)  => { e.target.style.borderColor = "var(--border)" }}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="login-password" style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 6 }}>
+              Password
+            </label>
+            <input
+              id="login-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                color: "var(--text-primary)",
+                fontSize: 14,
+                outline: "none",
+                transition: "border-color 150ms",
+                fontFamily: "inherit",
+              }}
+              onFocus={(e) => { e.target.style.borderColor = "var(--accent)" }}
+              onBlur={(e)  => { e.target.style.borderColor = "var(--border)" }}
+            />
+          </div>
+
+          {error && (
+            <div style={{
+              padding: "10px 14px",
+              background: "rgba(239,68,68,0.1)",
+              border: "1px solid rgba(239,68,68,0.25)",
+              borderRadius: 8,
+              fontSize: 12,
+              color: "#FCA5A5",
+            }}>
+              {error}
+            </div>
+          )}
+
+          <button
+            id="login-btn"
+            type="submit"
+            disabled={loading}
+            className="btn-accent"
+            style={{ width: "100%", padding: "11px 20px", fontSize: 14, marginTop: 4, opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? (
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <svg style={{ animation: "spin 1s linear infinite", width: 14, height: 14 }} viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                </svg>
+                Signing in...
+              </span>
+            ) : "Sign in →"}
+          </button>
+
+          {/* Demo hint */}
+          <div style={{
+            marginTop: 8,
+            padding: "10px 14px",
+            background: "var(--accent-dim)",
+            border: "1px solid rgba(99,102,241,0.2)",
+            borderRadius: 8,
+            fontSize: 12,
+          }}>
+            <span style={{ color: "var(--text-secondary)" }}>Demo: </span>
+            <button
+              type="button"
+              onClick={() => { setEmail("demo@finsight.ai"); setPassword("Demo@12345") }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#818CF8", fontWeight: 500, fontSize: 12 }}
+            >
+              Click to fill credentials →
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
     </div>
   )
 }

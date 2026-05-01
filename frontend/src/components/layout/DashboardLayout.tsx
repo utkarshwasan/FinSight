@@ -1,16 +1,21 @@
-import Navbar from "./Navbar"
 import Sidebar from "./Sidebar"
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+interface DashboardLayoutProps {
+  children: React.ReactNode
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
-      <Navbar />
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-950">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", background: "var(--bg-base)" }}>
+      {/* Ambient blobs */}
+      <div className="ambient-blob ambient-blob-1" />
+      <div className="ambient-blob ambient-blob-2" />
+
+      <Sidebar />
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 1 }}>
+        <main style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+          {children}
         </main>
       </div>
     </div>

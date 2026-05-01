@@ -1,54 +1,123 @@
 import { cn } from "@/lib/utils"
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  Eye, 
-  Newspaper, 
-  History, 
-  Settings 
-} from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
+import { useAuthStore } from "@/store/authStore"
+import { useWsStore } from "@/store/wsStore"
+import {
+  LayoutDashboard,
+  Eye,
+  TrendingUp,
+  Newspaper,
+  ScrollText,
+  Settings,
+  LogOut,
+  Zap
+} from "lucide-react"
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Overview", href: "/" },
-  { icon: Eye, label: "Watchlist", href: "/watchlist" },
-  { icon: TrendingUp, label: "Positions", href: "/positions" },
-  { icon: Newspaper, label: "News", href: "/news" },
-  { icon: History, label: "Audit Log", href: "/audit" },
-  { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: LayoutDashboard, label: "Overview",  href: "/" },
+  { icon: Eye,             label: "Watchlist", href: "/watchlist" },
+  { icon: TrendingUp,      label: "Positions", href: "/positions" },
+  { icon: Newspaper,       label: "News Feed", href: "/news" },
+  { icon: ScrollText,      label: "Audit Log", href: "/audit" },
 ]
 
 export default function Sidebar() {
   const location = useLocation()
+  const { user, logout } = useAuthStore()
+  const connected = useWsStore((s) => s.connected)
 
   return (
-    <aside className="w-64 border-r border-slate-800 bg-slate-950 flex flex-col hidden md:flex">
-      <div className="flex-1 py-6 px-4 space-y-2">
+    <aside
+      style={{
+        width: 220,
+        minWidth: 220,
+        background: "var(--bg-surface)",
+        borderRight: "1px solid var(--border)",
+        display: "flex",
+        flexDirection: "column",
+        padding: "20px 12px",
+        gap: 4,
+      }}
+    >
+      {/* Logo */}
+      <div style={{ padding: "0 8px 20px", borderBottom: "1px solid var(--border)", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 32, height: 32,
+            borderRadius: 8,
+            background: "linear-gradient(135deg, #6366F1, #4F46E5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 16px rgba(99,102,241,0.4)",
+            flexShrink: 0,
+          }}>
+            <Zap size={16} color="#fff" />
+          </div>
+          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.02em" }}>
+            <span className="glow-text-accent">Fin</span>
+            <span style={{ color: "var(--text-primary)" }}>Sight</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+        <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", padding: "0 12px 8px" }}>
+          Navigation
+        </p>
         {navItems.map((item) => (
           <Link
             key={item.href}
             to={item.href}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              location.pathname === item.href
-                ? "bg-blue-600/10 text-blue-400 border border-blue-600/20"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-            )}
+            className={cn("nav-item", location.pathname === item.href && "active")}
           >
-            <item.icon className="w-4 h-4" />
+            <item.icon size={15} style={{ flexShrink: 0 }} />
             {item.label}
           </Link>
         ))}
-      </div>
-      
-      <div className="p-4 border-t border-slate-800">
-        <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-2">Market Status</p>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-sm font-medium text-slate-200">NYSE Open</span>
-          </div>
+      </nav>
+
+      {/* Bottom: WS status + user */}
+      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+        {/* Connection status */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 8px" }}>
+          <div style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: connected ? "var(--green)" : "var(--text-muted)",
+            boxShadow: connected ? "0 0 6px var(--green)" : "none",
+          }} />
+          <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+            {connected ? "Live" : "Disconnected"}
+          </span>
         </div>
+
+        {/* User */}
+        {user && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 8, background: "rgba(255,255,255,0.03)" }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: "50%",
+              background: "var(--accent-dim)",
+              border: "1px solid var(--border-glow)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 11, fontWeight: 600, color: "#818CF8",
+              flexShrink: 0,
+            }}>
+              {user.email?.[0]?.toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user.full_name || user.email}
+              </p>
+              <p style={{ fontSize: 10, color: "var(--text-muted)" }}>Free tier</p>
+            </div>
+            <button
+              onClick={logout}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4, borderRadius: 4, display: "flex" }}
+              title="Sign out"
+            >
+              <LogOut size={13} />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   )
