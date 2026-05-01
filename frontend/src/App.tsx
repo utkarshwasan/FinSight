@@ -1,29 +1,44 @@
-import { useState, useEffect } from 'react'
+import { Routes, Route } from 'react-router-dom'
+import DashboardLayout from './components/layout/DashboardLayout'
+
+function Overview() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-3xl font-bold tracking-tight text-white">Market Overview</h2>
+        <p className="text-slate-400">Welcome back to FinSight AI. Here's what's happening today.</p>
+      </div>
+      
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {['BTC/USD', 'AAPL', 'TSLA', 'NVDA'].map((symbol) => (
+          <div key={symbol} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm hover:border-blue-500/50 transition-colors group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-bold text-slate-200">{symbol}</span>
+              <span className="text-emerald-400 text-sm font-medium">+2.4%</span>
+            </div>
+            <div className="text-2xl font-bold text-white">$98,432.12</div>
+            <div className="h-1 w-full bg-slate-800 mt-4 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 w-2/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function App() {
-  const [status, setStatus] = useState<string>('Loading...')
-
-  useEffect(() => {
-    fetch('http://localhost:8000/healthz')
-      .then(res => res.json())
-      .then(data => setStatus(data.status))
-      .catch(() => setStatus('Error connecting to backend'))
-  }, [])
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center justify-center p-4">
-      <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-        FinSight AI
-      </h1>
-      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl">
-        <p className="text-lg">
-          Backend Status: <span className={status === 'ok' ? 'text-emerald-400' : 'text-rose-400'}>{status}</span>
-        </p>
-      </div>
-      <p className="mt-8 text-slate-500 text-sm italic">
-        Real-time Financial Insights Dashboard - Nebula9.ai Assessment
-      </p>
-    </div>
+    <DashboardLayout>
+      <Routes>
+        <Route path="/" element={<Overview />} />
+        <Route path="/watchlist" element={<div>Watchlist Page</div>} />
+        <Route path="/positions" element={<div>Positions Page</div>} />
+        <Route path="/news" element={<div>News Page</div>} />
+        <Route path="/audit" element={<div>Audit Page</div>} />
+        <Route path="/settings" element={<div>Settings Page</div>} />
+      </Routes>
+    </DashboardLayout>
   )
 }
 
