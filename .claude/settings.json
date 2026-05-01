@@ -1,0 +1,45 @@
+{  
+  "permissions": {  
+    "allow": [  
+      "Bash(uv *)", "Bash(uv run *)", "Bash(python *)", "Bash(python3 *)",  
+      "Bash(pip *)", "Bash(pytest *)", "Bash(ruff *)", "Bash(mypy *)",  
+      "Bash(alembic upgrade *)", "Bash(alembic revision --autogenerate *)",  
+      "Bash(alembic current)", "Bash(alembic history *)", "Bash(uvicorn *)",  
+      "Bash(npm run *)", "Bash(npm install *)", "Bash(npx *)", "Bash(pnpm *)",  
+      "Bash(pnpm dlx *)", "Bash(node *)", "Bash(vite *)", "Bash(tsc *)",  
+      "Bash(eslint *)", "Bash(prettier *)", "Bash(docker compose *)",  
+      "Bash(docker build *)", "Bash(docker logs *)", "Bash(docker ps *)",  
+      "Bash(docker exec *)", "Bash(git status *)", "Bash(git diff *)",  
+      "Bash(git log *)", "Bash(git branch *)", "Bash(git checkout *)",  
+      "Bash(git add *)", "Bash(git commit *)", "Bash(git stash *)",  
+      "Bash(git fetch *)", "Bash(git pull *)", "Bash(gh pr *)",  
+      "Bash(gh issue *)", "Bash(gh run list *)", "Bash(gh run view *)",  
+      "Bash(curl http://localhost:*)", "Bash(curl https://api.finnhub.io/*)",  
+      "Bash(grep *)", "Bash(rg *)", "Bash(find *)", "Bash(ls *)",  
+      "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(wc *)",  
+      "Bash(jq *)", "Bash(unzip *)", "WebSearch",  
+      "WebFetch(domain:github.com)", "WebFetch(domain:fastapi.tiangolo.com)",  
+      "WebFetch(domain:react.dev)", "WebFetch(domain:reactflow.dev)",  
+      "WebFetch(domain:ui.shadcn.com)", "WebFetch(domain:tailwindcss.com)",  
+      "WebFetch(domain:docs.timescale.com)", "WebFetch(domain:ai.google.dev)",  
+      "WebFetch(domain:finnhub.io)", "WebFetch(domain:facebook.github.io)",  
+      "WebFetch(domain:authlib.org)"  
+    ],  
+    "deny": [  
+      "Read(.env)", "Read(.env.*)", "Edit(.env)", "Edit(.env.*)",  
+      "Read(**/*.pem)", "Read(**/*.key)", "Read(**/*.pfx)",  
+      "Bash(curl http://169.254.169.254/*)", "Bash(sudo *)",  
+      "Bash(rm -rf *)", "Bash(rm -rf /*)", "Bash(git push --force *)",  
+      "Bash(git push -f *)", "Bash(git reset --hard origin/*)",  
+      "Bash(docker volume rm *)", "Bash(docker compose down -v)",  
+      "Bash(alembic downgrade *)", "Bash(psql -c *DROP DATABASE*)",  
+      "Bash(psql -c *TRUNCATE*)"  
+    ]  
+  },  
+  "env": {  
+    "MAX_THINKING_TOKENS": "10000",  
+    "SLASH_COMMAND_TOOL_CHAR_BUDGET": "30000",  
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",  
+    "CLAUDE_CODE_DISABLE_CRON": "0"  
+  }  
+}
