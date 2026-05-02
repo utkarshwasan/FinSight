@@ -40,7 +40,7 @@ interface WsState {
   connected: boolean
   quoteTicks: Record<string, QuoteTick>
   dagEvents: DagEvent[]
-  queryComplete: QueryCompleteEvent | null
+  answersByRun: Record<string, { answer: string; sources: any[]; disclaimer: string }>
   alerts: AlertEvent[]
   setConnected: (v: boolean) => void
   handleEvent: (event: WsEvent) => void
@@ -50,7 +50,7 @@ export const useWsStore = create<WsState>((set) => ({
   connected: false,
   quoteTicks: {},
   dagEvents: [],
-  queryComplete: null,
+  answersByRun: {},
   alerts: [],
 
   setConnected: (connected) => set({ connected }),
@@ -66,7 +66,13 @@ export const useWsStore = create<WsState>((set) => ({
     } else if (event.type === 'dag_event') {
       set((state) => ({ dagEvents: [...state.dagEvents.slice(-50), event] }))
     } else if (event.type === 'query_complete') {
-      set((state) => ({ queryComplete: event }))
+      set((s) => ({
+        answersByRun: { ...s.answersByRun, [event.run_id]: {
+          answer: event.answer,
+          sources: event.sources,
+          disclaimer: event.disclaimer,
+        }},
+      }))
     } else if (event.type === 'alert') {
       set((state) => ({ alerts: [...state.alerts.slice(-20), event] }))
     }

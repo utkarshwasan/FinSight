@@ -1,66 +1,67 @@
-import os
-import random
+"""Backend CitationGuard: blocks rendering of uncited numeric claims.
+
+Mandatory per CLAUDE.md. Applied to every LLM output written to AgentState,
+not just the final answer.
+"""
+
+from __future__ import annotations
 import re
-from typing import Optional, Tuple
+from dataclasses import dataclass
+from typing import Iterable
 
-DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
-
+# Compile once. Bug-prone if recompiled inline — keep as module constant.
 _NUMERIC_PATTERN = re.compile(r"(?<!\[)\$?\d+(?:\.\d+)?%?(?!\s*\[\d+\])")
 _YEAR_PATTERN = re.compile(r"\b(19|20)\d{2}\b")
+_LIST_MARKER = re.compile(r"^\s*\d+\.\s", re.MULTILINE)
 
 
-def validate_citations(text: str) -> Tuple[bool, str]:
-    """
-    Validate that all numeric claims have citation markers.
-    Returns (is_valid, message).
-    """
-    if not text:
-        return True, "Empty text"
-
-    # Find all numeric claims
-    uncited = _NUMERIC_PATTERN.findall(text)
-
-    # Filter out common false positives (dates, section numbers, list markers)
-    false_positive_patterns = [
-        _YEAR_PATTERN.pattern,  # years 1900-2099
-        r"^\d+\.$",  # numbered list items at start
-    ]
-
-    filtered = []
-    for claim in uncited:
-        is_fp = False
-        for fp_pattern in false_positive_patterns:
-            if re.match(fp_pattern, claim.strip()):
-                is_fp = True
-                break
-        if not is_fp and float(claim.strip().replace("$", "").replace("%", "")) < 10000:
-            # Skip very large numbers (likely IDs or timestamps)
-            filtered.append(claim)
-
-    if filtered:
-        return False, f"Uncited numeric claims found: {filtered}"
-
-    return True, "All numerics properly cited"
+@dataclass(frozen=True)
+class Violation:
+    text: str
+    span: tuple[int, int]
 
 
 class CitationGuard:
-    """Middleware to block uncited numeric outputs."""
+    @staticmethod
+    def find_uncited(text: str) -> list[Violation]:
+        if not text:
+            return []
+        years = {m.span() for m in _YEAR_PATTERN.finditer(text)}
+        list_markers = {m.span() for m in _LIST_MARKER.finditer(text)}
+        out: list[Violation] = []
+        for m in _NUMERIC_PATTERN.finditer(text):
+            span = m.span()
+            # Skip years (e.g., 2024)
+            if any(s[0] <= span[0] < s[1] for s in years):
+                continue
+            # Skip list markers (e.g., "1. ", "2. ")
+            if any(s[0] <= span[0] < s[1] for s in list_markers):
+                continue
+            # Skip ID-like numbers > 10000
+            try:
+                value = float(m.group().lstrip("$").rstrip("%"))
+                if value > 10000:
+                    continue
+            except ValueError:
+                pass
+            out.append(Violation(text=m.group(), span=span))
+        return out
+
+    @staticmethod
+    def validate(text: str) -> tuple[bool, list[Violation]]:
+        v = CitationGuard.find_uncited(text)
+        return len(v) == 0, v
 
     @staticmethod
     def sanitize(text: str) -> str:
-        """Replace uncited numbers with redaction notice."""
-        is_valid, _ = validate_citations(text)
-        if is_valid:
+        if not text:
+            return ""
+        violations = CitationGuard.find_uncited(text)
+        if not violations:
             return text
-
-        # Replace uncited numeric claims
-
-        def replace_uncited(match):
-            num = match.group(0)
-            return f"[REDACTED: uncited numeric]"
-
-        sanitized = re.sub(_NUMERIC_PATTERN, replace_uncited, text)
-        return (
-            sanitized
-            + "\n\n⚠️ Note: Some numeric claims were removed for citation compliance."
-        )
+        # Replace from end → start to keep spans valid
+        out = text
+        for v in sorted(violations, key=lambda x: -x.span[0]):
+            out = out[: v.span[0]] + "[REDACTED: uncited numeric]" + out[v.span[1] :]
+        out += "\n\n_Note: some numeric claims were redacted because they lacked citation chips._"
+        return out

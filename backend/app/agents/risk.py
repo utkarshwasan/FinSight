@@ -1,5 +1,6 @@
 from app.agents.state import AgentState
 from app.services.gemini_client import gemini_client
+from app.services.citation_guard import CitationGuard
 import json
 import re
 
@@ -45,5 +46,6 @@ async def run_risk_node(state: AgentState) -> AgentState:
         print(f"[risk] parse failed: {e}")
         score = 0.5  # graceful default
 
+    state["risk_reasoning"] = CitationGuard.sanitize(result)
     state["risk_score"] = score
     return state

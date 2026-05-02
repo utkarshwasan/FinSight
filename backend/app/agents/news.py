@@ -1,6 +1,7 @@
 from app.agents.state import AgentState
 from app.services.finnhub_client import finnhub_client
 from app.services.gemini_client import gemini_client
+from app.services.citation_guard import CitationGuard
 import json
 import re
 
@@ -52,7 +53,9 @@ async def run_news_node(state: AgentState) -> AgentState:
         print(f"[news] parse failed: {e}")
         score = 0.0  # graceful default, but logged
 
-    state["news"] = [{"sentiment_score": score, "raw": result_text}]
+    state["news"] = [
+        {"sentiment_score": score, "raw": CitationGuard.sanitize(result_text)}
+    ]
     state["sentiment"] = score
 
     return state

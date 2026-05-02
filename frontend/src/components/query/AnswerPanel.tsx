@@ -1,27 +1,49 @@
-import { Sparkles, Loader2 } from 'lucide-react'
+import { CitationGuard } from "@/lib/citation-guard";
 
-export default function AnswerPanel({ answer, isGenerating }: { answer: string | null, isGenerating: boolean }) {
-  if (!answer && !isGenerating) return null
-  
+interface Source { n: number; kind: string; headline?: string; url?: string; mape?: number }
+
+export function AnswerPanel({ answer, sources, disclaimer }: {
+  answer: string; sources: Source[]; disclaimer: string;
+}) {
+  const sanitized = CitationGuard.sanitize(answer);
+  // Replace [n] with hover-able chips
+  const parts = sanitized.split(/(\[\d+\])/g);
   return (
-    <div className="glass-card p-5 rounded-xl border-t-2 border-t-sky-500 relative overflow-hidden">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles size={16} className="text-sky-400" />
-        <h3 className="text-sm font-semibold text-slate-200">AI Synthesis</h3>
-        {isGenerating && <Loader2 size={14} className="text-sky-400 animate-spin ml-auto" />}
-      </div>
-      
-      <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
-        {answer ? (
-          <div dangerouslySetInnerHTML={{ __html: answer.replace(/\n/g, '<br/>') }} />
-        ) : (
-          <div className="flex flex-col gap-2">
-            <div className="skeleton h-4 w-full" />
-            <div className="skeleton h-4 w-5/6" />
-            <div className="skeleton h-4 w-4/6" />
-          </div>
-        )}
-      </div>
+    <div className="rounded-xl border border-[#232c3a] bg-[#161d27] p-4 text-sm">
+      <p className="leading-relaxed">
+        {parts.map((p, i) => {
+          const m = p.match(/^\[(\d+)\]$/);
+          if (!m) return <span key={i}>{p}</span>;
+          const n = parseInt(m[1], 10);
+          const src = sources.find((s) => s.n === n);
+          return (
+            <span
+              key={i}
+              title={src ? (src.headline || `${src.kind}: MAPE=${src.mape}`) : "unknown source"}
+              className="inline-block bg-amber-400/20 text-amber-300 rounded px-1 mx-0.5 cursor-help"
+            >
+              [{n}]
+            </span>
+          );
+        })}
+      </p>
+      <p className="mt-3 text-xs text-neutral-500 italic">{disclaimer}</p>
+      {sources.length > 0 && (
+        <ul className="mt-3 text-xs text-neutral-400 space-y-1">
+          {sources.map((s) => (
+            <li key={s.n}>
+              [{s.n}]{" "}
+              {s.url ? (
+                <a href={s.url} target="_blank" rel="noopener noreferrer" className="underline">
+                  {s.headline}
+                </a>
+              ) : (
+                `${s.kind} (MAPE=${s.mape?.toFixed(2)})`
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
-  )
+  );
 }
