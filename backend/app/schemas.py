@@ -2,12 +2,15 @@ from datetime import datetime
 from typing import List, Optional, Any
 from pydantic import BaseModel, EmailStr, ConfigDict
 
+
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
 
+
 class UserCreate(UserBase):
     password: str
+
 
 class User(UserBase):
     id: int
@@ -15,18 +18,23 @@ class User(UserBase):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     user_id: Optional[int] = None
+
 
 class WatchlistItemBase(BaseModel):
     symbol: str
 
+
 class WatchlistItemCreate(WatchlistItemBase):
     pass
+
 
 class WatchlistItem(WatchlistItemBase):
     id: int
@@ -34,13 +42,17 @@ class WatchlistItem(WatchlistItemBase):
     added_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+
 class PositionBase(BaseModel):
     symbol: str
     quantity: float
     average_price: float
+    alert_threshold: Optional[float] = None
+
 
 class PositionCreate(PositionBase):
     pass
+
 
 class Position(PositionBase):
     id: int
@@ -49,14 +61,17 @@ class Position(PositionBase):
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+
 class PositionOut(Position):
     unrealized_pnl: Optional[float] = None
     unrealized_pnl_pct: Optional[float] = None
     current_price: Optional[float] = None
 
+
 class ForecastOut(BaseModel):
     forecast: List[dict[str, Any]]
     mape: float
+
 
 class QuoteTick(BaseModel):
     ts: datetime
@@ -64,6 +79,7 @@ class QuoteTick(BaseModel):
     price: float
     volume: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)
+
 
 class NewsItem(BaseModel):
     id: int
@@ -76,6 +92,7 @@ class NewsItem(BaseModel):
     sentiment_label: Optional[str] = None
     summary: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
+
 
 class AuditEvent(BaseModel):
     id: int
