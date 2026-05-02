@@ -1,7 +1,7 @@
 import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from jose import JWTError, jwt
-from app.auth import SECRET_KEY, ALGORITHM
+from app.auth import _get_jwt_secret, ALGORITHM
 from app.services.ws_hub import ws_hub
 
 router = APIRouter()
@@ -9,9 +9,12 @@ router = APIRouter()
 
 def _decode_token(token: str) -> int | None:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return int(payload.get("sub"))
-    except (JWTError, TypeError, ValueError):
+        payload = jwt.decode(token, _get_jwt_secret(), algorithms=[ALGORITHM])
+        sub = payload.get("sub")
+        if sub is None:
+            return None
+        return int(sub)
+    except (JWTError, ValueError, TypeError):
         return None
 
 

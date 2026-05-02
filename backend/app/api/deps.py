@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
-from app.auth import SECRET_KEY, ALGORITHM
+from app.auth import _get_jwt_secret, ALGORITHM
 from app import schemas, models
 from sqlalchemy import select
 
@@ -25,7 +25,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, _get_jwt_secret(), algorithms=[ALGORITHM])
         user_id_str = payload.get("sub")
         if user_id_str is None:
             raise credentials_exception

@@ -2,11 +2,12 @@ import { useMemo } from 'react'
 
 // Pattern for numeric claims: $123, 45%, 12.5%, etc.
 // Matches numbers that are NOT followed by a [n] citation
-const NUMERIC_PATTERN = /\$?\d+(?:\.\d+)?%?(?!\s*\[\d+\])/g
+const NUMERIC_PATTERN = /(?<!\[)\$?\d+(?:\.\d+)?%?(?!\s*\[\d+\])/g
 
 // Patterns to exclude (false positives)
+const YEAR_PATTERN = /\b(19|20)\d{2}\b/g;
 const FALSE_POSITIVE_PATTERNS = [
-  /\d{4}/, // Years like 2024
+  YEAR_PATTERN, // Years 1900-2099
 ]
 
 function isFalsePositive(match: string): boolean {

@@ -5,6 +5,9 @@ from typing import Optional, Tuple
 
 DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
 
+_NUMERIC_PATTERN = re.compile(r"(?<!\[)\$?\d+(?:\.\d+)?%?(?!\s*\[\d+\])")
+_YEAR_PATTERN = re.compile(r"\b(19|20)\d{2}\b")
+
 
 def validate_citations(text: str) -> Tuple[bool, str]:
     """
@@ -14,16 +17,12 @@ def validate_citations(text: str) -> Tuple[bool, str]:
     if not text:
         return True, "Empty text"
 
-    # Pattern for numeric claims (percentages, currency, decimals)
-    # Looks for numbers that aren't followed by a citation marker
-    numeric_pattern = r"\$?\d+(?:\.\d+)?%?(?!\s*\[\d+\])"
-
     # Find all numeric claims
-    uncited = re.findall(numeric_pattern, text)
+    uncited = _NUMERIC_PATTERN.findall(text)
 
     # Filter out common false positives (dates, section numbers, list markers)
     false_positive_patterns = [
-        r"\d{4}",  # years like 2024
+        _YEAR_PATTERN.pattern,  # years 1900-2099
         r"^\d+\.$",  # numbered list items at start
     ]
 
@@ -55,13 +54,12 @@ class CitationGuard:
             return text
 
         # Replace uncited numeric claims
-        numeric_pattern = r"\$?\d+(?:\.\d+)?%?(?!\s*\[\d+\])"
 
         def replace_uncited(match):
             num = match.group(0)
             return f"[REDACTED: uncited numeric]"
 
-        sanitized = re.sub(numeric_pattern, replace_uncited, text)
+        sanitized = re.sub(_NUMERIC_PATTERN, replace_uncited, text)
         return (
             sanitized
             + "\n\n⚠️ Note: Some numeric claims were removed for citation compliance."

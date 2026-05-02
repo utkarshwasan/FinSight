@@ -20,9 +20,11 @@ export function AICopilot({ onRun }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [answer, setAnswer] = useState<string | null>(null)
+  const [sources, setSources] = useState<any[]>([])
+  const [degraded, setDegraded] = useState(false)
   const [currentRunId, setCurrentRunId] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
-  const dagEvents = useWsStore((s) => s.dagEvents)
+  const queryComplete = useWsStore((s) => s.queryComplete)
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -32,17 +34,16 @@ export function AICopilot({ onRun }: Props) {
     return () => document.removeEventListener("mousedown", onClick)
   }, [])
 
-  // Watch for synthesis completion from DAG
+  // Watch for query completion from DAG
   useEffect(() => {
-    if (!currentRunId) return
-    const synthEvent = [...dagEvents].reverse().find(
-      (e) => e.run_id === currentRunId && e.node === "Synthesis" && e.partial_output
-    )
-    if (synthEvent?.partial_output) {
-      setAnswer(synthEvent.partial_output)
+    if (!currentRunId || !queryComplete) return
+    if (queryComplete.run_id === currentRunId) {
       setLoading(false)
+      setAnswer(queryComplete.answer)
+      setSources(queryComplete.sources || [])
+      setDegraded(queryComplete.degraded)
     }
-  }, [dagEvents, currentRunId])
+  }, [queryComplete, currentRunId])
 
   async function submit() {
     if (!query.trim()) return

@@ -1,3 +1,6 @@
+import asyncio
+import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,8 +16,34 @@ from app.api.endpoints import (
     forecast,
     audit,
 )
+from app.services.quote_poller import poll_loop
+from app.scripts.seed_demo import seed_demo_user
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Apply migrations (or rely on alembic upgrade head pre-deploy)
+    # 2. Seed demo user if missing (idempotent)
+    if os.getenv("SEED_DEMO_USER", "1") == "1":
+        try:
+            await seed_demo_user()
+        except Exception as e:
+            print(f"[seed] failed (non-fatal): {e}")
+    # 3. Start poller (NEW-3)
+    seed_symbols = ["AAPL", "NVDA", "TSLA", "MSFT", "GOOGL"]
+    poller_task = asyncio.create_task(poll_loop(seed_symbols))
+    try:
+        yield
+    finally:
+        poller_task.cancel()
+        try:
+            await poller_task
+        except asyncio.CancelledError:
+            pass
+
 
 app = FastAPI(
+    lifespan=lifespan,
     title="FinSight AI",
     description="Real-Time Financial Insights Dashboard. **Educational use only.**",
     version="1.0.0",

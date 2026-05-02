@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { BriefcaseBusiness, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import api from '@/lib/api'
 import { HoldingsCard } from '@/components/positions/HoldingsCard'
 import { AddPositionModal } from '@/components/positions/AddPositionModal'

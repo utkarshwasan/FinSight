@@ -38,13 +38,8 @@ async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
     if os.getenv("DEMO_MODE") == "1":
-        if (
-            form_data.username == DEMO_EMAIL
-            and form_data.password == DEMO_PASSWORD
-        ):
-            token = auth.create_access_token(
-                data={"sub": str(DEMO_USER_ID), "email": DEMO_EMAIL}
-            )
+        if form_data.username == DEMO_EMAIL and form_data.password == DEMO_PASSWORD:
+            token = auth.create_access_token(user_id=DEMO_USER_ID, email=DEMO_EMAIL)
             return {"access_token": token, "token_type": "bearer"}
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,5 +59,5 @@ async def login(
             detail="Invalid credentials",
         )
 
-    access_token = auth.create_access_token(data={"sub": str(user.id)})
+    access_token = auth.create_access_token(user_id=user.id, email=user.email)
     return {"access_token": access_token, "token_type": "bearer"}

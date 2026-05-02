@@ -8,7 +8,9 @@ export function connectWS() {
   const token = useAuthStore.getState().token
   if (!token || ws) return
 
-  const wsUrl = `ws://127.0.0.1:8000/ws?token=${token}`
+  const apiBase = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+  const wsBase = apiBase.replace(/^http/, "ws");
+  const wsUrl = `${wsBase}/ws?token=${encodeURIComponent(token)}`;
   ws = new ReconnectingWebSocket(wsUrl)
 
   ws.addEventListener('open', () => {

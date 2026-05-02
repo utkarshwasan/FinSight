@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
-import { Shield, Clock, Search, Terminal, Activity } from 'lucide-react'
+import { Shield, Clock, Terminal, Activity } from 'lucide-react'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 
 export default function AuditLog() {
