@@ -1,6 +1,7 @@
 import os
 import random
 import json
+import asyncio
 from typing import Optional
 
 DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
@@ -27,7 +28,7 @@ class GeminiClient:
                 )
             return "This is a synthesized demo response from the AI. The market looks interesting today! [1]"
 
-        try:
+        async def call_gemini():
             from google import genai
 
             client = genai.Client(api_key=self.api_key)
@@ -36,9 +37,16 @@ class GeminiClient:
                 contents=prompt,
             )
             return response.text
-        except Exception as e:
-            print(f"Gemini error: {e}")
-            return "Error calling AI."
+
+        for attempt in range(3):
+            try:
+                return await asyncio.to_thread(call_gemini)
+            except Exception as e:
+                if attempt < 2:
+                    await asyncio.sleep(1.0 * (2**attempt))
+                else:
+                    print(f"Gemini error after retries: {e}")
+                    return "Error calling AI."
 
 
 gemini_client = GeminiClient()
