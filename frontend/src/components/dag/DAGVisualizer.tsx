@@ -7,7 +7,7 @@ type Status = "idle" | "running" | "done" | "error" | "skipped"
 const NODES = [
   { id: "MarketData", label: "Fetch",        sub: "yfinance + Finnhub", x: 30,  y: 50  },
   { id: "News",       label: "News",         sub: "Sentiment NER",      x: 220, y: 30  },
-  { id: "Forecast",   label: "Forecast",     sub: "Prophet 7d",         x: 220, y: 130 },
+  { id: "Forecast",   label: "Forecast",     sub: "Forecast 7d",         x: 220, y: 130 },
   { id: "Risk",       label: "Synthesize",   sub: "Gemini 1.5 Pro",     x: 410, y: 80  },
   { id: "Alert",      label: "Cite & Verify",sub: "Citation guard",     x: 600, y: 80  },
 ]

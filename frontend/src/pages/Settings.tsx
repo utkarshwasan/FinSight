@@ -35,7 +35,10 @@ export default function SettingsPage() {
 
   return (
     <DashboardShell title="Settings" subtitle="Personal preferences, alerts and AI behavior">
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="text-center py-12">
+        <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
+        <p className="text-slate-500">Settings page is under development.</p>
+      </div>
         {/* Sidebar nav */}
         <aside className="space-y-1">
           {[
