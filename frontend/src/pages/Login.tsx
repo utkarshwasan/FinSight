@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { connectWS } from '@/lib/ws'
 import api from '@/lib/api'
-import { Zap, TrendingUp, Shield, Activity } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Zap, TrendingUp, Shield, Activity, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 
 const features = [
@@ -67,7 +68,7 @@ export default function LoginPage() {
         <div style={{
           position: "absolute", top: -100, left: -100,
           width: 500, height: 500,
-          background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 65%)",
+          background: "radial-gradient(circle, rgba(245,180,84,0.15) 0%, transparent 65%)",
           borderRadius: "50%", filter: "blur(60px)", pointerEvents: "none",
         }} />
 
@@ -75,9 +76,9 @@ export default function LoginPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: "linear-gradient(135deg, #6366F1, #4F46E5)",
+            background: "linear-gradient(135deg, #f5b454, #d4922e)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 4px 20px rgba(99,102,241,0.45)",
+            boxShadow: "0 4px 20px rgba(245,180,84,0.45)",
           }}>
             <Zap size={18} color="#fff" />
           </div>
@@ -89,12 +90,12 @@ export default function LoginPage() {
 
         {/* Main copy */}
         <div style={{ position: "relative", zIndex: 1 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#818CF8", marginBottom: 16 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#f5b454", marginBottom: 16 }}>
             AI-POWERED TRADING INTELLIGENCE
           </p>
-          <h2 style={{ fontSize: 40, fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.04em", color: "var(--text-primary)", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 40, fontWeight: 600, fontFamily: "var(--font-display)", lineHeight: 1.15, letterSpacing: "-0.04em", color: "var(--text-primary)", marginBottom: 20 }}>
             Real-time insights<br />
-            <span className="glow-text-accent">for every trade.</span>
+            <span className="text-amber-accent drop-shadow-[0_0_15px_rgba(245,180,84,0.3)]">for every trade.</span>
           </h2>
           <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.65, maxWidth: 380, marginBottom: 40 }}>
             5-node AI pipeline that analyses market data, news sentiment, and price forecasts — all streaming live to your dashboard.
@@ -107,10 +108,10 @@ export default function LoginPage() {
                 <div style={{
                   width: 32, height: 32, borderRadius: 8, flexShrink: 0,
                   background: "var(--accent-dim)",
-                  border: "1px solid rgba(99,102,241,0.2)",
+                  border: "1px solid rgba(245,180,84,0.2)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
-                  <f.icon size={14} color="#818CF8" />
+                  <f.icon size={14} color="#f5b454" />
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{f.label}</p>
@@ -123,7 +124,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
-          ⚠ Educational use only · Not financial advice · Nebula9.ai Assessment
+          ⚠ Educational use only · Not financial advice
         </p>
       </div>
 
@@ -216,30 +217,28 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button
+          <Button
             id="login-btn"
             type="submit"
             disabled={loading}
-            className="btn-accent"
-            style={{ width: "100%", padding: "11px 20px", fontSize: 14, marginTop: 4, opacity: loading ? 0.7 : 1 }}
+            className="w-full h-11 bg-[#f5b454] hover:bg-[#f7c372] text-[#1a1207] rounded-xl text-sm font-semibold transition-all active:scale-[0.98] shadow-lg shadow-[#f5b454]/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 mt-1"
           >
             {loading ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <svg style={{ animation: "spin 1s linear infinite", width: 14, height: 14 }} viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
-                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                </svg>
-                Signing in...
-              </span>
-            ) : "Sign in →"}
-          </button>
+              <>
+                <Loader2 className="animate-spin h-4 w-4" />
+                <span>Signing in...</span>
+              </>
+            ) : (
+              "Sign in →"
+            )}
+          </Button>
 
           {/* Demo hint */}
           <div style={{
             marginTop: 8,
             padding: "10px 14px",
             background: "var(--accent-dim)",
-            border: "1px solid rgba(99,102,241,0.2)",
+            border: "1px solid rgba(245,180,84,0.2)",
             borderRadius: 8,
             fontSize: 12,
           }}>
@@ -247,7 +246,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setEmail("demo@finsight.ai"); setPassword("Demo@12345") }}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#818CF8", fontWeight: 500, fontSize: 12 }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#f5b454", fontWeight: 500, fontSize: 12 }}
             >
               Click to fill credentials →
             </button>

@@ -1,23 +1,12 @@
-import Sidebar from "./Sidebar"
+import { Sidebar } from "./Sidebar"
 
-interface DashboardLayoutProps {
-  children: React.ReactNode
-}
-
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", background: "var(--bg-base)" }}>
-      {/* Ambient blobs */}
-      <div className="ambient-blob ambient-blob-1" />
-      <div className="ambient-blob ambient-blob-2" />
-
+    <div className="min-h-screen flex text-foreground">
       <Sidebar />
-
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 1 }}>
-        <main style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
-          {children}
-        </main>
-      </div>
+      <main className="flex-1 min-w-0">
+        {children}
+      </main>
     </div>
   )
 }

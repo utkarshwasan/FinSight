@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Eye, Plus, Trash2 } from 'lucide-react'
+import { Eye, Plus, Trash2, Search } from 'lucide-react'
 import api from '@/lib/api'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
 interface WatchlistItem {
   id: number
@@ -31,53 +32,68 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Watchlist</h1>
-        <p className="text-sm text-slate-400">Track symbols for quotes, charts, and AI analysis.</p>
-      </div>
-
-      <div className="glass-card p-4 flex items-center gap-3">
-        <input
-          value={symbol}
-          onChange={(e) => setSymbol(e.target.value)}
-          placeholder="Add symbol (e.g. AAPL)"
-          className="flex-1 bg-slate-900/60 border border-slate-700 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-        />
-        <button
-          onClick={addSymbol}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all"
-        >
-          <Plus size={16} />
-          Add
-        </button>
-      </div>
-
-      <div className="glass-card p-5">
-        {isLoading ? (
-          <p className="text-sm text-slate-400">Loading watchlist...</p>
-        ) : data && data.length > 0 ? (
-          <div className="space-y-2">
-            {data.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/30 px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Eye size={14} className="text-indigo-300" />
-                  <span className="font-semibold text-white">{item.symbol}</span>
-                </div>
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="p-2 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-                  aria-label={`Remove ${item.symbol}`}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+    <DashboardShell 
+      title="Watchlist" 
+      subtitle="Track symbols for quotes, charts, and AI analysis."
+    >
+      <div className="space-y-6">
+        <div className="bg-[#161d27] rounded-2xl border border-[#232c3a] p-5 flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addSymbol()}
+              placeholder="Add symbol (e.g. AAPL)"
+              className="w-full h-11 pl-10 pr-4 rounded-xl bg-[#1c2532] border border-[#232c3a] text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/30 transition-all"
+            />
           </div>
-        ) : (
-          <p className="text-sm text-slate-500">No symbols yet. Add at least one ticker.</p>
-        )}
+          <button
+            onClick={addSymbol}
+            className="inline-flex items-center gap-2 px-6 h-11 rounded-xl bg-[#f5b454] hover:bg-[#f7c372] text-[#1a1207] text-sm font-semibold transition-all active:scale-[0.98] shadow-lg shadow-[#f5b454]/20 cursor-pointer"
+          >
+            <Plus size={16} />
+            Add
+          </button>
+        </div>
+
+        <div className="bg-[#161d27] rounded-2xl border border-[#232c3a] p-5">
+          {isLoading ? (
+            <div className="space-y-3">
+              <div className="shimmer h-12 rounded-xl w-full" />
+              <div className="shimmer h-12 rounded-xl w-full" />
+              <div className="shimmer h-12 rounded-xl w-full" />
+            </div>
+          ) : data && data.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {data.map((item) => (
+                <div key={item.id} className="group flex items-center justify-between rounded-xl border border-[#232c3a] bg-[#1c2532] px-4 py-3 hover:border-amber/30 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber/10 flex items-center justify-center">
+                      <Eye size={14} className="text-amber-accent" />
+                    </div>
+                    <span className="font-semibold text-white">{item.symbol}</span>
+                  </div>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="p-2 rounded-lg text-slate-500 hover:text-bear hover:bg-bear/10 transition-all cursor-pointer"
+                    aria-label={`Remove ${item.symbol}`}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 text-center">
+              <div className="w-12 h-12 mx-auto rounded-full bg-[#1c2532] border border-[#232c3a] flex items-center justify-center mb-4">
+                <Eye size={20} className="text-slate-600" />
+              </div>
+              <p className="text-sm text-slate-400">No symbols yet. Add at least one ticker.</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardShell>
   )
 }

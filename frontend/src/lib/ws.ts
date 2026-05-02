@@ -8,7 +8,7 @@ export function connectWS() {
   const token = useAuthStore.getState().token
   if (!token || ws) return
 
-  const wsUrl = `ws://localhost:8000/ws?token=${token}`
+  const wsUrl = `ws://127.0.0.1:8000/ws?token=${token}`
   ws = new ReconnectingWebSocket(wsUrl)
 
   ws.addEventListener('open', () => {

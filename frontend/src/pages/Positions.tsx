@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { BriefcaseBusiness } from 'lucide-react'
+import { BriefcaseBusiness, Plus } from 'lucide-react'
 import api from '@/lib/api'
-import HoldingsCard from '@/components/positions/HoldingsCard'
-import AddPositionForm from '@/components/positions/AddPositionForm'
+import { HoldingsCard } from '@/components/positions/HoldingsCard'
+import { AddPositionModal } from '@/components/positions/AddPositionModal'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
 interface Position {
   id: number
@@ -21,34 +22,28 @@ export default function PositionsPage() {
   })
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-6">
-      {showAddPosition && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <AddPositionForm onClose={() => setShowAddPosition(false)} />
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Positions</h1>
-          <p className="text-sm text-slate-400">Manage holdings and monitor live portfolio P&L.</p>
-        </div>
+    <DashboardShell 
+      title="Holdings" 
+      subtitle="Manage holdings and monitor live portfolio P&L."
+      actions={
         <button
           onClick={() => setShowAddPosition(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#f5b454] hover:bg-[#f7c372] text-[#1a1207] text-sm font-medium transition-all active:scale-[0.98] shadow-lg shadow-[#f5b454]/30 cursor-pointer"
         >
-          <BriefcaseBusiness size={16} />
+          <Plus size={15} />
           Add Position
         </button>
-      </div>
+      }
+    >
+      <AddPositionModal open={showAddPosition} onClose={() => setShowAddPosition(false)} />
 
       {isLoading ? (
-        <div className="glass-card p-6">
-          <p className="text-sm text-slate-400">Loading positions...</p>
+        <div className="bg-[#161d27] rounded-2xl border border-[#232c3a] p-6">
+          <div className="shimmer h-40 rounded-xl w-full" />
         </div>
       ) : (
-        <HoldingsCard positions={data || []} />
+        <HoldingsCard positions={data || []} onAdd={() => setShowAddPosition(true)} />
       )}
-    </div>
+    </DashboardShell>
   )
 }

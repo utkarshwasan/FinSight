@@ -1,11 +1,22 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import auth, users, watchlist, positions, quotes, news, ws, query, forecast, audit
+from app.api.endpoints import (
+    auth,
+    users,
+    watchlist,
+    positions,
+    quotes,
+    news,
+    ws,
+    query,
+    forecast,
+    audit,
+)
 
 app = FastAPI(
     title="FinSight AI",
-    description="Real-Time Financial Insights Dashboard — Nebula9.ai Assessment. **Educational use only.**",
+    description="Real-Time Financial Insights Dashboard. **Educational use only.**",
     version="1.0.0",
 )
 
@@ -37,7 +48,6 @@ app.include_router(query.router, prefix="/query", tags=["query"])
 app.include_router(forecast.router, prefix="/forecast", tags=["forecast"])
 app.include_router(audit.router, prefix="/audit", tags=["audit"])
 app.include_router(ws.router, tags=["websocket"])
-
 
 
 @app.get("/healthz", tags=["health"])

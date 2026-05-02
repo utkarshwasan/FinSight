@@ -20,7 +20,7 @@ export default function AgentNode({ data }: { data: { label: string, status: str
 
   return (
     <div className={`relative flex items-center gap-3 px-4 py-2 rounded-xl border ${
-      isRunning ? 'border-indigo-500 bg-indigo-500/10' :
+      isRunning ? 'border-#f5b454 bg-amber/10' :
       isDone ? 'border-emerald-500/30 bg-slate-900' :
       isError ? 'border-rose-500/50 bg-rose-500/10' :
       'border-slate-800 bg-slate-900/50'
@@ -28,13 +28,13 @@ export default function AgentNode({ data }: { data: { label: string, status: str
       
       {/* Pulse ring when running */}
       {isRunning && (
-        <div className="absolute inset-0 -m-1 border border-indigo-500/50 rounded-xl animate-ping opacity-20" />
+        <div className="absolute inset-0 -m-1 border border-#f5b454/50 rounded-xl animate-ping opacity-20" />
       )}
       
       <Handle type="target" position={Position.Top} className="w-2 h-2 bg-slate-700 border-none" />
       
       <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-        isRunning ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' :
+        isRunning ? 'bg-[#f5b454] text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' :
         isDone ? 'bg-emerald-500/20 text-emerald-400' :
         isError ? 'bg-rose-500/20 text-rose-400' :
         'bg-slate-800 text-slate-400'
@@ -45,7 +45,7 @@ export default function AgentNode({ data }: { data: { label: string, status: str
       <div className="flex-1">
         <div className="text-sm font-semibold text-slate-200">{data.label}</div>
         <div className="text-[10px] text-slate-400 flex items-center gap-1">
-          {isRunning && <span className="text-indigo-400 font-medium">Running...</span>}
+          {isRunning && <span className="text-amber-accent font-medium">Running...</span>}
           {isDone && <span className="text-emerald-400 font-medium flex items-center gap-1"><CheckCircle2 size={10} /> {data.latency_ms || 0}ms</span>}
           {isError && <span className="text-rose-400 font-medium flex items-center gap-1"><XCircle size={10} /> Failed</span>}
           {isPending && <span>Standby</span>}

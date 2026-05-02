@@ -8,6 +8,8 @@ import AuditLog from './pages/AuditLog'
 import WatchlistPage from './pages/Watchlist'
 import PositionsPage from './pages/Positions'
 import NewsPage from './pages/News'
+import MarketsPage from './pages/Markets'
+import SettingsPage from './pages/Settings'
 import { useAuthStore } from './store/authStore'
 import { connectWS } from './lib/ws'
 
@@ -26,16 +28,16 @@ function App() {
         path="/*"
         element={
           <ProtectedRoute>
-            <DashboardLayout>
               <Routes>
                 <Route path="/" element={<OverviewPage />} />
+                <Route path="/markets" element={<MarketsPage />} />
                 <Route path="/watchlist" element={<WatchlistPage />} />
-                <Route path="/positions" element={<PositionsPage />} />
+                <Route path="/holdings" element={<PositionsPage />} />
                 <Route path="/news" element={<NewsPage />} />
-                <Route path="/audit" element={<AuditLog />} />
+                <Route path="/dag-audit" element={<AuditLog />} />
+                <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </DashboardLayout>
           </ProtectedRoute>
         }
       />
