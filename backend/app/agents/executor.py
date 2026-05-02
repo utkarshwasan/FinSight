@@ -19,9 +19,11 @@ class DAGExecutor:
         self,
         nodes: dict[str, NodeCallable],
         on_event: Callable[[dict[str, Any]], Awaitable[None]],
+        audit_writer=None,
     ):
         self.nodes = nodes
         self.on_event = on_event
+        self.audit_writer = audit_writer
 
     async def _run_node(self, name: str, state: AgentState) -> None:
         started = datetime.now(timezone.utc).isoformat()
@@ -55,6 +57,7 @@ class DAGExecutor:
             )
         except Exception as e:
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
+            error_msg = str(e)[:200]
             await self.on_event(
                 {
                     "type": "dag_event",
@@ -66,9 +69,13 @@ class DAGExecutor:
                     "latency_ms": elapsed_ms,
                     "tokens": 0,
                     "partial_output": "",
-                    "error_msg": str(e)[:200],
+                    "error_msg": error_msg,
                 }
             )
+            if self.audit_writer:
+                await self.audit_writer.log_node(
+                    state["run_id"], name, "error", elapsed_ms, 0, error_msg
+                )
             raise
 
     def _extract_partial(self, name: str, state: AgentState) -> str:
@@ -142,6 +149,10 @@ class DAGExecutor:
                 "partial_output": (partial or "")[:200],
             }
         )
+        if self.audit_writer:
+            await self.audit_writer.log_node(
+                state["run_id"], name, "done", elapsed_ms, _approx_tokens(partial)
+            )
         return True
 
     async def _mark_skipped(self, names: list[str], state: AgentState) -> None:

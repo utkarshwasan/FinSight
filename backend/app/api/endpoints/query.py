@@ -24,13 +24,19 @@ class QueryResponse(BaseModel):
     run_id: str
 
 
-async def run_dag_background(run_id: str, user_id: int, request: QueryRequest):
+async def run_dag_background(run_id: str, user_id: int, request: QueryRequest, db):
     try:
+        from app.services.audit_writer import AuditWriter
+
+        audit_writer = AuditWriter(db, user_id)
+
         # WS callback
         async def on_event(event_data: dict):
             await ws_hub.publish_to_user(user_id, event_data)
 
-        executor = DAGExecutor(nodes=DAG_NODES, on_event=on_event)
+        executor = DAGExecutor(
+            nodes=DAG_NODES, on_event=on_event, audit_writer=audit_writer
+        )
 
         initial_state = {
             "run_id": run_id,
@@ -110,5 +116,5 @@ async def submit_query(
     db.add(audit_event)
     await db.commit()
 
-    background_tasks.add_task(run_dag_background, run_id, current_user.id, request)
+    background_tasks.add_task(run_dag_background, run_id, current_user.id, request, db)
     return {"run_id": run_id}
