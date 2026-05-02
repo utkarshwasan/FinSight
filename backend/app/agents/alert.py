@@ -10,6 +10,10 @@ def _build_alert_prompt(state: AgentState) -> tuple[str, list[dict]]:
     forecast = state.get("forecast") or {}
     risk_score = state.get("risk_score", 0.0)
 
+    errors = state.get("errors") or {}
+    skipped = state.get("skipped") or []
+    degraded = bool(errors) or bool(skipped)
+
     sources: list[dict] = []
     src_lines: list[str] = []
     for i, n in enumerate(news_items[:3], start=1):
@@ -40,11 +44,17 @@ def _build_alert_prompt(state: AgentState) -> tuple[str, list[dict]]:
         "<untrusted_data>\n" + "\n".join(src_lines) + "\n</untrusted_data>\n\n"
         "Answer:"
     )
+    if degraded:
+        prompt += f"\n\nNOTE: The following stages had issues — {list(errors.keys()) + skipped}. State that the answer is partial."
     return prompt, sources
 
 
 async def run_alert_node(state: AgentState) -> AgentState:
     risk_score = state.get("risk_score", 0.0)
+
+    errors = state.get("errors") or {}
+    skipped = state.get("skipped") or []
+    degraded = bool(errors) or bool(skipped)
 
     # Simple alert logic
     state["alert_triggered"] = risk_score > 0.8
