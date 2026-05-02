@@ -1,5 +1,6 @@
 import { Menu } from "lucide-react"
 import { Sidebar } from "./Sidebar"
+import { AlertToast } from "@/components/ui/AlertToast"
 import type { ReactNode } from "react"
 
 type Props = {
@@ -35,6 +36,8 @@ export function DashboardShell({ title, subtitle, actions, children }: Props) {
           </header>
 
           {children}
+
+          <AlertToast />
 
           <footer className="text-[11px] text-slate-600 pt-4 pb-2 text-center">
             FinSight AI · Educational use only · Forecasts are illustrative, not investment advice.

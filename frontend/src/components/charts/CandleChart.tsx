@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 
 // Pure SVG candle chart + volume + 7d forecast — no external lib.
 type Candle = { o: number; h: number; l: number; c: number; v: number }
@@ -25,6 +25,7 @@ function generateSeries(seed = 1, n = 60): Candle[] {
 }
 
 export function CandleChart() {
+  const [period, setPeriod] = useState("1D")
   const candles = useMemo(() => generateSeries(7, 60), [])
   const forecast = useMemo(() => {
     const last = candles[candles.length - 1].c
@@ -160,12 +161,13 @@ export function CandleChart() {
 
       <div className="flex items-center justify-between mt-3">
         <div className="flex gap-1">
-          {["1D", "5D", "1M", "3M", "1Y", "All"].map((t, i) => (
+          {["1D", "5D", "1M", "3M", "1Y", "All"].map((t) => (
             <button
               key={t}
+              onClick={() => setPeriod(t)}
               className={[
                 "px-2.5 py-1 text-[11px] rounded-md transition-colors cursor-pointer",
-                i === 0 ? "bg-amber/15 text-amber-accent" : "text-slate-500 hover:text-white hover:bg-white/5",
+                period === t ? "bg-amber/15 text-amber-accent" : "text-slate-500 hover:text-white hover:bg-white/5",
               ].join(" ")}
             >
               {t}

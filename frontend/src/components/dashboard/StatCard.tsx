@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from "react"
 
 type Props = {
   symbol: string
-  name: string
+  name?: string
   price: number
-  change: number // pct
-  volume: string
+  change?: number // pct
+  volume?: string
 }
 
-export function StatCard({ symbol, name, price, change, volume }: Props) {
+export function StatCard({ symbol, name = "", price, change = 0, volume = "" }: Props) {
   const up = change >= 0
   const [flash, setFlash] = useState<"up" | "down" | null>(null)
   const prev = useRef(price)
@@ -49,14 +49,18 @@ export function StatCard({ symbol, name, price, change, volume }: Props) {
       <div className="text-2xl sm:text-[28px] font-display font-semibold mb-1 tabular-nums tracking-tight">
         ${price.toFixed(2)}
       </div>
-      <div className="flex items-center gap-1.5 text-xs text-slate-500 tabular-nums">
-        <span className={up ? "text-bull" : "text-bear"}>
-          {up ? "+" : ""}
-          {change.toFixed(2)}%
-        </span>
-        <span className="text-slate-700">·</span>
-        <span>Vol {volume}</span>
-      </div>
+      {(change !== undefined || volume) && (
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 tabular-nums">
+          {change !== undefined && (
+            <span className={up ? "text-bull" : "text-bear"}>
+              {up ? "+" : ""}
+              {change.toFixed(2)}%
+            </span>
+          )}
+          {change !== undefined && volume && <span className="text-slate-700">·</span>}
+          {volume && <span>Vol {volume}</span>}
+        </div>
+      )}
     </div>
   )
 }

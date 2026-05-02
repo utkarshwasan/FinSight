@@ -2,6 +2,7 @@ import { Sparkles, Send, ChevronDown, ArrowUpRight } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import api from "@/lib/api"
 import { useWsStore } from "@/store/wsStore"
+import { useWatchlist } from "@/lib/queries/watchlist"
 
 const SUGGESTIONS = [
   "Why did AAPL drop today?",
@@ -9,8 +10,6 @@ const SUGGESTIONS = [
   "Sentiment on TSLA this week",
   "Forecast MSFT next 7 days",
 ]
-
-const SYMBOLS = ["AAPL", "NVDA", "MSFT", "TSLA", "AMD", "GOOGL"]
 
 type Props = { onRun: (runId?: string) => void }
 
@@ -25,6 +24,7 @@ export function AICopilot({ onRun }: Props) {
   const [currentRunId, setCurrentRunId] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
   const queryComplete = useWsStore((s) => s.queryComplete)
+  const { data: wl = [] } = useWatchlist()
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -91,7 +91,7 @@ export function AICopilot({ onRun }: Props) {
           </button>
           {open && (
             <div className="absolute top-[58px] left-0 z-50 w-32 bg-[#161d27] border border-[#232c3a] rounded-xl shadow-2xl py-1 overflow-hidden">
-              {SYMBOLS.map((s) => (
+              {wl.map((w) => w.symbol).map((s) => (
                 <button
                   key={s}
                   onClick={() => { setSymbol(s); setOpen(false) }}
