@@ -46,6 +46,7 @@ class DAGExecutor:
                     "started_at": started_at,
                     "ended_at": ended_at,
                     "latency_ms": latency_ms,
+                    "tokens": 0,  # TODO: integrate actual token counting
                 }
             )
             return state

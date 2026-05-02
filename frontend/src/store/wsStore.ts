@@ -13,8 +13,8 @@ interface DagEvent {
   run_id: string
   started_at?: string
   ended_at?: string
-  tokens?: number
-  latency_ms?: number
+  tokens: number
+  latency_ms: number
   partial_output?: string
 }
 
