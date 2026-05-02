@@ -1,6 +1,6 @@
 # revision identifiers, used by Alembic.
 revision = "0002"
-down_revision = "0001"
+down_revision = "138777129abd"
 branch_labels = None
 depends_on = None
 

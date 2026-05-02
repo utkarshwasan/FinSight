@@ -144,7 +144,6 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      </section>
     </DashboardShell>
   )
 }
