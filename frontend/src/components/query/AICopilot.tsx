@@ -19,12 +19,11 @@ export function AICopilot({ onRun }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [answer, setAnswer] = useState<string | null>(null)
-  const [sources, setSources] = useState<any[]>([])
-  const [degraded, setDegraded] = useState(false)
   const [currentRunId, setCurrentRunId] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
-  const queryComplete = useWsStore((s) => s.queryComplete)
+  const { answersByRun } = useWsStore((s) => ({ answersByRun: s.answersByRun }))
   const { data: wl = [] } = useWatchlist()
+  const symbols = wl.length > 0 ? wl.map((w) => w.symbol) : ["AAPL", "NVDA", "TSLA", "MSFT", "GOOGL"]
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -36,14 +35,13 @@ export function AICopilot({ onRun }: Props) {
 
   // Watch for query completion from DAG
   useEffect(() => {
-    if (!currentRunId || !queryComplete) return
-    if (queryComplete.run_id === currentRunId) {
+    if (!currentRunId) return
+    const result = answersByRun[currentRunId]
+    if (result) {
       setLoading(false)
-      setAnswer(queryComplete.answer)
-      setSources(queryComplete.sources || [])
-      setDegraded(queryComplete.degraded)
+      setAnswer(result.answer)
     }
-  }, [queryComplete, currentRunId])
+  }, [answersByRun, currentRunId])
 
   async function submit() {
     if (!query.trim()) return
@@ -91,7 +89,7 @@ export function AICopilot({ onRun }: Props) {
           </button>
           {open && (
             <div className="absolute top-[58px] left-0 z-50 w-32 bg-[#161d27] border border-[#232c3a] rounded-xl shadow-2xl py-1 overflow-hidden">
-              {wl.map((w) => w.symbol).map((s) => (
+              {symbols.map((s) => (
                 <button
                   key={s}
                   onClick={() => { setSymbol(s); setOpen(false) }}

@@ -13,4 +13,17 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// Response interceptor: redirect to login on 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear auth store and redirect
+      useAuthStore.getState().logout();
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api

@@ -22,7 +22,7 @@ export default function OverviewPage() {
 
   const { data: watchlist = [], isLoading } = useWatchlist()
   const addItem = useAddWatchlistItem()
-  const latestPrices = useWsStore((s) => s.latestPrices)
+  const latestPrices = useWsStore((s) => s.quoteTicks)
 
   const { data: positions } = useQuery({
     queryKey: ["positions"],

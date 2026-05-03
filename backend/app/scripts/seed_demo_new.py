@@ -2,7 +2,6 @@
 seed_demo.py — Idempotent demo data seeder.
 Safe to run multiple times (all inserts are guarded).
 """
-
 import asyncio
 import os
 import random
@@ -20,13 +19,11 @@ from app.models import NewsItem, Position, QuoteTick, User, WatchlistItem
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-DATABASE_URL = (
-    os.environ.get(
-        "DATABASE_URL",
-        "postgresql+psycopg://postgres:postgres@localhost:5432/finsight",
-    )
-    .replace("postgresql+psycopg://", "postgresql+psycopg_async://")
-    .replace("postgresql://", "postgresql+psycopg_async://")
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+psycopg://postgres:postgres@localhost:5432/finsight",
+).replace("postgresql+psycopg://", "postgresql+psycopg_async://").replace(
+    "postgresql://", "postgresql+psycopg_async://"
 )
 
 
@@ -44,24 +41,9 @@ DEMO_PRICES: dict[str, float] = {
 
 
 DEMO_POSITIONS = [
-    {
-        "symbol": "AAPL",
-        "quantity": 10.0,
-        "average_price": 175.00,
-        "alert_threshold": 185.00,
-    },
-    {
-        "symbol": "NVDA",
-        "quantity": 5.0,
-        "average_price": 820.00,
-        "alert_threshold": 900.00,
-    },
-    {
-        "symbol": "TSLA",
-        "quantity": 8.0,
-        "average_price": 230.00,
-        "alert_threshold": None,
-    },
+    {"symbol": "AAPL", "quantity": 10.0, "average_price": 175.00, "alert_threshold": 185.00},
+    {"symbol": "NVDA", "quantity": 5.0, "average_price": 820.00, "alert_threshold": 900.00},
+    {"symbol": "TSLA", "quantity": 8.0, "average_price": 230.00, "alert_threshold": None},
 ]
 
 
@@ -229,17 +211,20 @@ DEMO_NEWS = [
 ]
 
 
+
+
 async def seed(engine=None) -> None:
     """Entry point called by main.py lifespan."""
     await seed_demo_user(engine)
 
 
+
+
 async def seed_demo_user(engine=None) -> None:
     if engine is None:
         engine = create_async_engine(DATABASE_URL, echo=False)
-    session_factory = async_sessionmaker(
-        engine, expire_on_commit=False, class_=AsyncSession
-    )
+    session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
 
     async with session_factory() as session:
         # ── Demo user ──────────────────────────────────────────────────
@@ -256,7 +241,9 @@ async def seed_demo_user(engine=None) -> None:
             user = existing
             print("Demo user already exists, skipping user creation.")
 
+
         user_id = user.id
+
 
         # ── Watchlist items ────────────────────────────────────────────
         for symbol in DEMO_PRICES:
@@ -268,6 +255,7 @@ async def seed_demo_user(engine=None) -> None:
             )
             if not wl_exists:
                 session.add(WatchlistItem(user_id=user_id, symbol=symbol))
+
 
         # ── Positions ─────────────────────────────────────────────────
         for pos in DEMO_POSITIONS:
@@ -288,6 +276,7 @@ async def seed_demo_user(engine=None) -> None:
                     )
                 )
 
+
         # ── Quote ticks (30-day history, idempotent) ──────────────────
         now = datetime.now(timezone.utc)
         for symbol, base_price in DEMO_PRICES.items():
@@ -301,9 +290,8 @@ async def seed_demo_user(engine=None) -> None:
                     for hour in [9, 12, 15]:
                         ts = now - timedelta(days=days_ago, hours=-hour)
                         price = price * (1 + random.uniform(-0.02, 0.02))
-                        session.add(
-                            QuoteTick(symbol=symbol, price=round(price, 2), ts=ts)
-                        )
+                        session.add(QuoteTick(symbol=symbol, price=round(price, 2), ts=ts))
+
 
         # ── News items (20 items, idempotent by URL) ──────────────────
         for item in DEMO_NEWS:
@@ -323,12 +311,13 @@ async def seed_demo_user(engine=None) -> None:
                     )
                 )
 
+
         await session.commit()
-        print(
-            f"Seed complete: demo user id={user_id}, "
-            f"{len(DEMO_PRICES)} watchlist, {len(DEMO_POSITIONS)} positions, "
-            f"{len(DEMO_NEWS)} news items."
-        )
+        print(f"Seed complete: demo user id={user_id}, "
+              f"{len(DEMO_PRICES)} watchlist, {len(DEMO_POSITIONS)} positions, "
+              f"{len(DEMO_NEWS)} news items.")
+
+
 
 
 if __name__ == "__main__":

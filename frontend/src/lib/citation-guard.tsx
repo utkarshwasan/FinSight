@@ -49,6 +49,9 @@ export function CitationGuard({ text }: { text: string }) {
   return <span className="text-slate-200">{safeText}</span>
 }
 
+// Static method for backward compatibility
+CitationGuard.sanitize = sanitizeText
+
 // Helper to extract and display citations
 export function CitationList({ text }: { text: string }) {
   const citations = useMemo(() => {

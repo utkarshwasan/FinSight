@@ -24,6 +24,7 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - FINNHUB_API_KEY=${FINNHUB_API_KEY}
       - JWT_SECRET=${JWT_SECRET}
+      - ALLOWED_ORIGINS=http://localhost:5173
       - DEMO_MODE=1
     ports:
       - "8000:8000"
@@ -35,10 +36,10 @@ services:
     build:
       context: ./frontend
       dockerfile: ../Dockerfile.frontend
+      args:
+        VITE_API_URL: http://localhost:8000
     ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_URL=http://backend:8000
+      - "5173:80"
     depends_on:
       - backend
 

@@ -17,7 +17,7 @@ export function AnswerPanel({ answer, sources, disclaimer }: {
         </div>
       )}
       <p className="leading-relaxed">
-        {parts.map((p, i) => {
+         {parts.map((p: string, i: number) => {
           const m = p.match(/^\[(\d+)\]$/);
           if (!m) return <span key={i}>{p}</span>;
           const n = parseInt(m[1], 10);

@@ -61,6 +61,9 @@ export function DAGVisualizer({ runToken, currentRunId }: { runToken: number; cu
   const nodeById = (id: string) => NODES.find((n) => n.id === id)!
   const hasRun = runToken > 0 || !!currentRunId
   const doneCount = Object.values(statuses).filter((s) => s === "done").length
+  const totalLatency = dagEvents
+    .filter(e => e.run_id === currentRunId && e.status === "done")
+    .reduce((sum, e) => sum + e.latency_ms, 0)
 
   return (
     <div className="bg-[#161d27] rounded-2xl border border-[#232c3a] overflow-hidden">
@@ -169,15 +172,15 @@ export function DAGVisualizer({ runToken, currentRunId }: { runToken: number; cu
                 })}
               </svg>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-[#232c3a]">
-                <span>{currentRunId ? currentRunId.slice(0, 12) : "run_demo"}</span>
-                <span className="tabular-nums">
-                  {doneCount}/5 ·
-                  <span className="text-bull ml-1">
-                    {Object.values(statuses).filter((s) => s === "done").length * 312}ms
-                  </span>
-                </span>
-              </div>
+               <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-[#232c3a]">
+                 <span>{currentRunId ? currentRunId.slice(0, 12) : "run_demo"}</span>
+                 <span className="tabular-nums">
+                   {doneCount}/5 ·
+                   <span className="text-bull ml-1">
+                     {currentRunId ? totalLatency : doneCount * 312}ms
+                   </span>
+                 </span>
+               </div>
             </div>
           )}
         </div>

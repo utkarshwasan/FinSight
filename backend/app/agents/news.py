@@ -2,6 +2,7 @@ from app.agents.state import AgentState
 from app.services.finnhub_client import finnhub_client
 from app.services.gemini_client import gemini_client
 from app.services.citation_guard import CitationGuard
+from datetime import datetime, timezone
 import json
 import re
 
@@ -52,6 +53,37 @@ async def run_news_node(state: AgentState) -> AgentState:
     except ValueError as e:
         print(f"[news] parse failed: {e}")
         score = 0.0  # graceful default, but logged
+
+    # ── Persist to DB ─────────────────────────────────────────────────
+    session_factory = state.get("_session_factory")
+    if session_factory and headlines:
+        from sqlalchemy import select as sa_select
+        from app.models import NewsItem
+
+        try:
+            async with session_factory() as db_session:
+                for i, headline in enumerate(headlines[:5]):  # persist top 5
+                    # Idempotent: skip if same headline+symbol already stored
+                    existing = await db_session.scalar(
+                        sa_select(NewsItem).where(
+                            NewsItem.symbol == symbol,
+                            NewsItem.headline == headline[:500],
+                        )
+                    )
+                    if not existing:
+                        db_session.add(
+                            NewsItem(
+                                user_id=state.get("user_id"),
+                                symbol=symbol,
+                                headline=headline[:500],
+                                source="Gemini/Finnhub",
+                                sentiment_score=score,
+                                published_at=datetime.now(timezone.utc),
+                            )
+                        )
+                await db_session.commit()
+        except Exception as e:
+            print(f"[News] DB persist failed (non-fatal): {e}")
 
     state["news"] = [
         {"sentiment_score": score, "raw": CitationGuard.sanitize(result_text)}

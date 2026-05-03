@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional
 import yfinance as yf
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import select
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/finsight"
@@ -53,6 +54,41 @@ async def poll_loop(symbols: list[str]):
 
     from app.models import QuoteTick
 
+    async def _check_alerts(symbol: str, price: float) -> None:
+        """Check position thresholds and fire alert events."""
+        try:
+            from sqlalchemy import select
+            from app.models import Position
+
+            async with SessionLocal() as session:
+                positions = (
+                    (
+                        await session.execute(
+                            select(Position).where(
+                                Position.symbol == symbol,
+                                Position.alert_threshold.is_not(None),
+                                Position.alert_threshold <= price,
+                            )
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+
+                for pos in positions:
+                    await ws_hub.publish_to_user(
+                        pos.user_id,
+                        {
+                            "type": "alert",
+                            "symbol": symbol,
+                            "price": price,
+                            "threshold": pos.alert_threshold,
+                            "message": f"{symbol} hit ${price:.2f} ≥ your alert threshold ${pos.alert_threshold:.2f}",
+                        },
+                    )
+        except Exception as e:
+            print(f"[AlertCheck] {e}")
+
     while True:
         async with SessionLocal() as db:
             for symbol in symbols:
@@ -77,6 +113,8 @@ async def poll_loop(symbols: list[str]):
                         "ts": tick.ts.isoformat(),
                     }
                 )
+                # Check alerts
+                await _check_alerts(symbol, price)
 
             try:
                 await db.commit()

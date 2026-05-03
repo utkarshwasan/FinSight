@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Any
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 
 class UserBase(BaseModel):
@@ -9,7 +9,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(min_length=8, max_length=72)
 
 
 class User(UserBase):
@@ -29,7 +29,7 @@ class TokenData(BaseModel):
 
 
 class WatchlistItemBase(BaseModel):
-    symbol: str
+    symbol: str = Field(pattern=r"^[A-Z0-9.\-]{1,10}$")
 
 
 class WatchlistItemCreate(WatchlistItemBase):
@@ -44,9 +44,9 @@ class WatchlistItem(WatchlistItemBase):
 
 
 class PositionBase(BaseModel):
-    symbol: str
-    quantity: float
-    average_price: float
+    symbol: str = Field(pattern=r"^[A-Z0-9.\-]{1,10}$")
+    quantity: float = Field(gt=0, lt=1e9)
+    average_price: float = Field(gt=0, lt=1e9)
     alert_threshold: Optional[float] = None
 
 

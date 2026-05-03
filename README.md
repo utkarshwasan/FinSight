@@ -46,19 +46,47 @@ graph TD
     end  
 ```
 
-## Quickstart (60 seconds)
+## Quick Start
 
-```bash  
-git clone <this-repo> finsight && cd finsight  
-cp .env.example .env  
-# Fill in GEMINI_API_KEY (free: https://aistudio.google.com/apikey)  
-# Fill in FINNHUB_API_KEY (free: https://finnhub.io/register)  
-docker compose up  
-# Backend: http://localhost:8000  · Frontend: http://localhost:5173  
-# Login: demo@finsight.ai / demo123 (seeded)  
+### Prerequisites
+- Docker + Docker Compose
+- API keys (see §API Keys section below)
+
+### 1. Clone & configure
+```bash
+git clone https://github.com/utkarshwasan/FinSight.git
+cd FinSight
+cp .env.example .env
+# Edit .env: set GEMINI_API_KEY, FINNHUB_API_KEY, JWT_SECRET
 ```
 
+### 2. Run
+```bash
+docker compose up --build
+```
+
+### 3. Access
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:8000/docs
+- **Demo login:** `demo@finsight.ai` / `Demo@12345`
+
+### 4. API Keys
+
+| Key | Where to get | Free tier |
+|-----|-------------|-----------|
+| `GEMINI_API_KEY` | https://aistudio.google.com/app/apikey | 1M tokens/day |
+| `FINNHUB_API_KEY` | https://finnhub.io/register | 60 calls/min |
+| `JWT_SECRET` | `python -c "import secrets; print(secrets.token_hex(32))"` | — |
+
+> **No API keys?** Set `DEMO_MODE=1` in `.env` to use fixture data.
+
+### Educational Disclaimer
+FinSight AI is built for educational and demonstration purposes only.
+**Not financial advice.** Do not make investment decisions based on outputs.
+
 To record the demo with deterministic outputs, set `DEMO_MODE=1` in `.env` before `docker compose up`.
+
+You can also run the automated production tester checklist: `scripts/production_check.sh`.
 
 ## Tech Stack
 
