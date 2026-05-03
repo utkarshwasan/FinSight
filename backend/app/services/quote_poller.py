@@ -12,9 +12,8 @@ from sqlalchemy import select
 _alert_cooldown: dict[tuple[int, str], float] = {}
 ALERT_COOLDOWN_SECONDS = 300
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/finsight"
-).replace("postgresql+psycopg://", "postgresql+psycopg_async://")
+from app.db import ASYNC_DATABASE_URL
+
 
 DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
 POLL_INTERVAL = 15  # seconds
@@ -51,9 +50,10 @@ async def fetch_price(symbol: str) -> Optional[float]:
 
 async def poll_loop(symbols: list[str]):
     """Background polling loop. Runs in the worker process."""
+    print(f"[Poller] Starting loop for {symbols}...")
     from app.services.ws_hub import ws_hub
 
-    engine = create_async_engine(DATABASE_URL, echo=False)
+    engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
     SessionLocal = async_sessionmaker(
         engine, expire_on_commit=False, class_=AsyncSession
     )
@@ -125,6 +125,8 @@ async def poll_loop(symbols: list[str]):
                         "ts": tick.ts.isoformat(),
                     }
                 )
+                print(f"[Poller] Broadcast tick: {symbol} @ {price}")
+
                 # Check alerts
                 await _check_alerts(symbol, price)
 

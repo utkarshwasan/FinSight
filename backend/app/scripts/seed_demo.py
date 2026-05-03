@@ -9,15 +9,12 @@ import random
 from datetime import datetime, timedelta, timezone
 
 
-from passlib.context import CryptContext
+from bcrypt import hashpw, gensalt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-
 from app.models import NewsItem, Position, QuoteTick, User, WatchlistItem
 
-
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 DATABASE_URL = (
@@ -247,7 +244,7 @@ async def seed_demo_user(engine=None) -> None:
         if not existing:
             user = User(
                 email=DEMO_EMAIL,
-                hashed_password=pwd_ctx.hash(DEMO_PASSWORD),
+                hashed_password=hashpw(DEMO_PASSWORD.encode("utf-8"), gensalt(12)).decode("utf-8"),
             )
             session.add(user)
             await session.flush()  # get user.id

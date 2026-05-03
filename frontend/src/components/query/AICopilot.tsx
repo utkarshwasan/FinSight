@@ -22,7 +22,7 @@ export function AICopilot({ onRun }: Props) {
   const [sources, setSources] = useState<any[]>([])
   const [currentRunId, setCurrentRunId] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
-  const { answersByRun } = useWsStore((s) => ({ answersByRun: s.answersByRun }))
+  const answersByRun = useWsStore((s) => s.answersByRun)
   const { data: wl = [] } = useWatchlist()
   const symbols = wl.length > 0 ? wl.map((w) => w.symbol) : ["AAPL", "NVDA", "TSLA", "MSFT", "GOOGL"]
 

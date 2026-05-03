@@ -4,6 +4,8 @@ __pycache__/
 venv/
 .pytest_cache/
 .ruff_cache/
+.kilo/
+.gemini/
 .mypy_cache/
 htmlcov/
 .coverage
@@ -54,3 +56,9 @@ docs/RUNBOOK.md
 docs/adr/
 demo/
 restructure.py
+query.json
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg

@@ -20,12 +20,12 @@ services:
       context: ./backend
       dockerfile: ../Dockerfile.backend
     environment:
-      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/finsight
+      - DATABASE_URL=${DATABASE_URL}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - FINNHUB_API_KEY=${FINNHUB_API_KEY}
       - JWT_SECRET=${JWT_SECRET}
-      - ALLOWED_ORIGINS=http://localhost:5173
-      - DEMO_MODE=1
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - DEMO_MODE=${DEMO_MODE}
     ports:
       - "8000:8000"
     depends_on:

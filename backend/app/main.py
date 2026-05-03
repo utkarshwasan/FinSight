@@ -22,6 +22,7 @@ from app.scripts.seed_demo import seed_demo_user
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    print("[lifespan] Starting...")
     # 1. Apply migrations (or rely on alembic upgrade head pre-deploy)
     # 2. Seed demo user if missing (idempotent)
     if os.getenv("SEED_DEMO_USER", "1") == "1":
@@ -31,6 +32,7 @@ async def lifespan(app: FastAPI):
             print(f"[seed] failed (non-fatal): {e}")
     # 3. Start poller (NEW-3)
     seed_symbols = ["AAPL", "NVDA", "TSLA", "MSFT", "GOOGL"]
+    print(f"[lifespan] Starting poller for {seed_symbols}...")
     poller_task = asyncio.create_task(poll_loop(seed_symbols))
     try:
         yield

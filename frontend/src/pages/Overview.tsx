@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import api from "@/lib/api"
@@ -29,6 +29,28 @@ export default function OverviewPage() {
     queryFn: () => api.get("/positions").then((r) => r.data),
     retry: false,
   })
+
+  // NEW: Initial price fetch to prevent $0.00 flicker
+  const [initialPrices, setInitialPrices] = useState<Record<string, number>>({})
+  useEffect(() => {
+    if (watchlist.length > 0) {
+      const fetchAll = async () => {
+        const prices: Record<string, number> = {}
+        await Promise.all(
+          watchlist.map(async (w) => {
+            try {
+              const { data } = await api.get(`/quotes/${w.symbol}/latest`)
+              prices[w.symbol] = data.price
+            } catch {
+              prices[w.symbol] = 0
+            }
+          })
+        )
+        setInitialPrices(prices)
+      }
+      fetchAll()
+    }
+  }, [watchlist])
 
   return (
     <>
@@ -66,7 +88,8 @@ export default function OverviewPage() {
           ) : (
             watchlist.map((w) => {
               const live = latestPrices[w.symbol];
-              return <StatCard key={w.id} symbol={w.symbol} price={live?.price ?? 0} />;
+              const price = live?.price ?? initialPrices[w.symbol] ?? 0;
+              return <StatCard key={w.id} symbol={w.symbol} price={price} />;
             })
           )}
         </section>
