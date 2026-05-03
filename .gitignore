@@ -32,6 +32,9 @@ logs/
 *.tmp
 *.bak
 
+# Doc generation tooling — not for repo
+scripts/docgen/
+
 # Internal build docs — not for repo
 BUILD-PROMPT.md
 setup-on-new-machine.md

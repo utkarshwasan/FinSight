@@ -282,4 +282,4 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
-*Author: Utkarsh Wasan · utkarsh.wasan@cognizant.com*
+*Author: Utkarsh Wasan · [github.com/utkarshwasan](https://github.com/utkarshwasan)*
