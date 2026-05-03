@@ -1,12 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 import uuid
 import json
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentUser, DBDep
 from app import models
-from app.db import get_db
+from app.db import AsyncSessionLocal
 from app.agents.executor import DAGExecutor
 from app.agents import DAG_NODES
 from app.services.ws_hub import ws_hub
@@ -24,49 +23,52 @@ class QueryResponse(BaseModel):
     run_id: str
 
 
-async def run_dag_background(run_id: str, user_id: int, request: QueryRequest, db):
+async def run_dag_background(run_id: str, user_id: int, request: QueryRequest):
+    """
+    Background DAG execution.
+    Creates its OWN DB session — never uses the request-scoped session
+    which is already closed by the time this runs.
+    """
     try:
-        from app.services.audit_writer import AuditWriter
+        async with AsyncSessionLocal() as bg_db:
+            from app.services.audit_writer import AuditWriter
+            audit_writer = AuditWriter(bg_db, user_id)
 
-        audit_writer = AuditWriter(db, user_id)
+            async def on_event(event_data: dict):
+                await ws_hub.publish_to_user(user_id, event_data)
 
-        # WS callback
-        async def on_event(event_data: dict):
-            await ws_hub.publish_to_user(user_id, event_data)
+            executor = DAGExecutor(
+                nodes=DAG_NODES, on_event=on_event, audit_writer=audit_writer
+            )
 
-        executor = DAGExecutor(
-            nodes=DAG_NODES, on_event=on_event, audit_writer=audit_writer
-        )
+            initial_state = {
+                "run_id": run_id,
+                "user_id": user_id,
+                "symbol": request.symbol,
+                "query": request.query,
+                "at_timestamp": request.at_timestamp,
+                # Give agents access to DB via session factory (NOT request-scoped session)
+                "_session_factory": AsyncSessionLocal,
+                # Initial empty values
+                "market_data": None,
+                "news": None,
+                "forecast": None,
+                "risk_score": None,
+                "alert_triggered": None,
+                "answer": None,
+                "errors": {},
+                "skipped": [],
+            }
 
-        initial_state = {
-            "run_id": run_id,
-            "user_id": user_id,
-            "symbol": request.symbol,
-            "query": request.query,
-            "at_timestamp": request.at_timestamp,
-            "market_data": None,
-            "news": None,
-            "forecast": None,
-            "risk_score": None,
-            "alert_triggered": None,
-            "answer": None,
-        }
+            final_state = await executor.run(initial_state)
 
-        final_state = await executor.run(initial_state)
-
-        # Validate citations before sending answer
+        # CitationGuard pass on final answer
         from app.services.citation_guard import CitationGuard
-
         answer_text = (final_state.get("answer") or "").strip()
         if not answer_text:
-            answer_text = "[no answer generated — see audit log for run_id={}]".format(
-                run_id
-            )
+            answer_text = f"[no answer generated — see audit log for run_id={run_id}]"
         validated_answer = CitationGuard.sanitize(answer_text)
 
-        final_state["answer"] = validated_answer
-
-        # Send final answer over WS
         await ws_hub.publish_to_user(
             user_id,
             {
@@ -80,9 +82,9 @@ async def run_dag_background(run_id: str, user_id: int, request: QueryRequest, d
                 ),
             },
         )
+
     except Exception as e:
         import logging
-
         logger = logging.getLogger("finsight")
         logger.exception(f"DAG background failed for run_id={run_id}")
         await ws_hub.publish_to_user(
@@ -90,7 +92,7 @@ async def run_dag_background(run_id: str, user_id: int, request: QueryRequest, d
             {
                 "type": "query_complete",
                 "run_id": run_id,
-                "answer": f"[error] {type(e).__name__}: please retry. run_id={run_id}",
+                "answer": f"[error] Analysis pipeline failed. Please retry. (run_id={run_id})",
                 "sources": [],
                 "disclaimer": "Educational use only — not financial advice.",
                 "degraded": True,
@@ -107,7 +109,7 @@ async def submit_query(
 ):
     run_id = str(uuid.uuid4())
 
-    # Log audit event
+    # Log query submission to audit (request-scoped db is fine here)
     audit_event = models.AuditEvent(
         user_id=current_user.id,
         event_type="dag_query",
@@ -116,5 +118,6 @@ async def submit_query(
     db.add(audit_event)
     await db.commit()
 
-    background_tasks.add_task(run_dag_background, run_id, current_user.id, request, db)
+    # Background task creates its own session — db is NOT passed
+    background_tasks.add_task(run_dag_background, run_id, current_user.id, request)
     return {"run_id": run_id}

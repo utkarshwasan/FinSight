@@ -248,7 +248,6 @@ async def seed_demo_user(engine=None) -> None:
             user = User(
                 email=DEMO_EMAIL,
                 hashed_password=pwd_ctx.hash(DEMO_PASSWORD),
-                role="user",
             )
             session.add(user)
             await session.flush()  # get user.id
@@ -313,7 +312,6 @@ async def seed_demo_user(engine=None) -> None:
             if not news_exists:
                 session.add(
                     NewsItem(
-                        user_id=user_id,
                         symbol=item["symbol"],
                         headline=item["headline"],
                         source=item["source"],

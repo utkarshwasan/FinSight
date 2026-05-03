@@ -6,18 +6,10 @@ from app.models import QuoteTick
 
 async def run_market_data_node(state: "AgentState") -> "AgentState":
     symbol = state["symbol"]
-    on_event = state.get("on_event")
     session_factory = state.get("_session_factory")
-
-    if on_event:
-        await on_event(
-            {
-                "type": "dag_event",
-                "node": "MarketData",
-                "status": "running",
-                "run_id": state["run_id"],
-            }
-        )
+    # NOTE: Do NOT emit dag_events here — the executor wraps every node
+    # in _safe_run and handles running/done/error events. Emitting here
+    # would produce duplicate events in the DAGVisualizer.
 
     # 1. Fetch latest price from poller
     from app.services.quote_poller import fetch_price
@@ -27,18 +19,7 @@ async def run_market_data_node(state: "AgentState") -> "AgentState":
         if latest_price is None:
             raise ValueError(f"No price for {symbol}")
     except Exception as e:
-        state.setdefault("errors", {})["MarketData"] = str(e)
-        if on_event:
-            await on_event(
-                {
-                    "type": "dag_event",
-                    "node": "MarketData",
-                    "status": "error",
-                    "run_id": state["run_id"],
-                    "error_msg": str(e),
-                }
-            )
-        return state
+        raise  # Let executor handle error emission + state recording
 
     # 2. Read 30-day history from DB
     history_df = None
@@ -63,7 +44,7 @@ async def run_market_data_node(state: "AgentState") -> "AgentState":
         except Exception as e:
             print(f"[MarketData] DB history read failed: {e}")
 
-    # 3. Fall back to synthetic if DB empty (e.g., first boot before poller runs)
+    # 3. Fall back to synthetic if DB empty (e.g., first boot before poller seeds data)
     if history_df is None or len(history_df) < 5:
         import random
 
@@ -81,18 +62,5 @@ async def run_market_data_node(state: "AgentState") -> "AgentState":
         "latest_price": latest_price,
         "history_df": history_df,
     }
-
-    if on_event:
-        await on_event(
-            {
-                "type": "dag_event",
-                "node": "MarketData",
-                "status": "done",
-                "run_id": state["run_id"],
-                "partial_output": f"Price: ${latest_price:.2f} | History: {len(history_df)} rows",
-                "latency_ms": 0,
-                "tokens": 0,
-            }
-        )
 
     return state

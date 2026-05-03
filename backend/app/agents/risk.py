@@ -28,12 +28,17 @@ async def run_risk_node(state: AgentState) -> AgentState:
         sentiment = news_data[0].get("sentiment_score", 0.0)
 
     forecast_data = state.get("forecast", {})
+    # Serialize as JSON so Gemini receives structured data, not Python repr
+    forecast_json = json.dumps(
+        {k: v for k, v in forecast_data.items() if k != "forecast"},  # skip large array
+        default=str
+    )
 
     prompt = f"""
     Given the following data for {symbol}:
     Sentiment Score: {sentiment}
-    Forecast: {forecast_data}
-    
+    Forecast summary: {forecast_json}
+
     Calculate a risk score between 0.0 (safe) and 1.0 (very risky).
     Return JSON with 'risk_score' and 'reasoning'.
     """

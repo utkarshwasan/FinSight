@@ -3,6 +3,7 @@ from app.services.finnhub_client import finnhub_client
 from app.services.gemini_client import gemini_client
 from app.services.citation_guard import CitationGuard
 from datetime import datetime, timezone
+import hashlib
 import json
 import re
 
@@ -71,11 +72,15 @@ async def run_news_node(state: AgentState) -> AgentState:
                         )
                     )
                     if not existing:
+                        # Generate stable URL key from symbol+headline hash (url is NOT NULL)
+                        headline_hash = hashlib.md5(
+                            f"{symbol}:{headline}".encode()
+                        ).hexdigest()[:12]
                         db_session.add(
                             NewsItem(
-                                user_id=state.get("user_id"),
                                 symbol=symbol,
                                 headline=headline[:500],
+                                url=f"https://finnhub.io/news/{symbol}/{headline_hash}",
                                 source="Gemini/Finnhub",
                                 sentiment_score=score,
                                 published_at=datetime.now(timezone.utc),
@@ -85,9 +90,18 @@ async def run_news_node(state: AgentState) -> AgentState:
         except Exception as e:
             print(f"[News] DB persist failed (non-fatal): {e}")
 
+    # Build state["news"] with headline + url so alert.py can populate sources
+    # alert.py iterates news_items and reads n.get("headline") and n.get("url")
+    sanitized_summary = CitationGuard.sanitize(result_text)
     state["news"] = [
-        {"sentiment_score": score, "raw": CitationGuard.sanitize(result_text)}
-    ]
+        {
+            "headline": h,
+            "url": f"https://finnhub.io/news/{symbol}/{hashlib.md5(f'{symbol}:{h}'.encode()).hexdigest()[:12]}",
+            "sentiment_score": score,
+            "raw": sanitized_summary,
+        }
+        for h in (headlines[:3] if headlines else [])
+    ] or [{"sentiment_score": score, "raw": sanitized_summary}]
     state["sentiment"] = score
 
     return state

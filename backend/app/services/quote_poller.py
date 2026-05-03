@@ -1,10 +1,16 @@
 import os
 import asyncio
+import time as _time
 from datetime import datetime, timezone
 from typing import Optional
 import yfinance as yf
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import select
+
+# Alert cooldown: (user_id, symbol) → last_fired monotonic timestamp
+# Prevents toast spam — fires at most once per 5 minutes per user/symbol pair
+_alert_cooldown: dict[tuple[int, str], float] = {}
+ALERT_COOLDOWN_SECONDS = 300
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/finsight"
@@ -75,7 +81,13 @@ async def poll_loop(symbols: list[str]):
                     .all()
                 )
 
+                now_mono = _time.monotonic()
                 for pos in positions:
+                    key = (pos.user_id, symbol)
+                    last_fired = _alert_cooldown.get(key, 0)
+                    if now_mono - last_fired < ALERT_COOLDOWN_SECONDS:
+                        continue  # Already fired recently — skip
+                    _alert_cooldown[key] = now_mono
                     await ws_hub.publish_to_user(
                         pos.user_id,
                         {

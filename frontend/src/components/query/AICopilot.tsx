@@ -19,6 +19,7 @@ export function AICopilot({ onRun }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [answer, setAnswer] = useState<string | null>(null)
+  const [sources, setSources] = useState<any[]>([])
   const [currentRunId, setCurrentRunId] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
   const { answersByRun } = useWsStore((s) => ({ answersByRun: s.answersByRun }))
@@ -33,13 +34,14 @@ export function AICopilot({ onRun }: Props) {
     return () => document.removeEventListener("mousedown", onClick)
   }, [])
 
-  // Watch for query completion from DAG
+  // Watch for query completion from DAG via WebSocket
   useEffect(() => {
     if (!currentRunId) return
     const result = answersByRun[currentRunId]
     if (result) {
       setLoading(false)
       setAnswer(result.answer)
+      setSources(result.sources || [])
     }
   }, [answersByRun, currentRunId])
 
@@ -47,13 +49,15 @@ export function AICopilot({ onRun }: Props) {
     if (!query.trim()) return
     setLoading(true)
     setAnswer(null)
+    setSources([])
     try {
       const { data } = await api.post("/query/", { query, symbol })
       setCurrentRunId(data.run_id)
       onRun(data.run_id)
     } catch {
       setLoading(false)
-      setAnswer(`${symbol} closed at $178.42, down 1.2% on the session [1]. Sentiment turned mildly bearish after a Bloomberg report on slower iPhone 17 demand in China [2]. The 7-day Prophet forecast projects a range of $174.10–$182.60 with a median of $178.90 [3].`)
+      setAnswer("[error] Could not reach analysis service. Please check your connection and retry.")
+      setSources([])
     }
   }
 
@@ -151,19 +155,22 @@ export function AICopilot({ onRun }: Props) {
             <div className="space-y-3">
               <p className="text-sm leading-relaxed text-slate-200">{answer}</p>
               <div className="flex flex-wrap gap-2 pt-1 border-t border-[#232c3a]">
-                {[
-                  { n: 1, src: "yfinance · 14:32 IST" },
-                  { n: 2, src: "Finnhub · Bloomberg" },
-                  { n: 3, src: "Prophet · run_a8f2c1" },
-                ].map((c) => (
-                  <a
-                    key={c.n}
-                    className="text-[11px] text-amber-accent hover:text-amber-accent flex items-center gap-1 cursor-pointer"
-                  >
-                    [{c.n}] {c.src}
-                    <ArrowUpRight size={11} />
-                  </a>
-                ))}
+                {sources.length > 0 ? (
+                  sources.map((c: any, idx: number) => (
+                    <a
+                      key={c.n ?? idx}
+                      href={c.url || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-amber-accent hover:text-amber-accent flex items-center gap-1 cursor-pointer"
+                    >
+                      [{c.n ?? idx + 1}] {c.src || c.source || c.headline?.slice(0, 40) || "Source"}
+                      <ArrowUpRight size={11} />
+                    </a>
+                  ))
+                ) : (
+                  <span className="text-[11px] text-slate-500">No citations available</span>
+                )}
               </div>
             </div>
           )}

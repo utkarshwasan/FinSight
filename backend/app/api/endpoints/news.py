@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, desc
-from app.api.deps import DBDep
+from app.api.deps import DBDep, CurrentUser
 from app import schemas, models
 
 router = APIRouter()
 
 
 @router.get("/{symbol}", response_model=list[schemas.NewsItem])
-async def get_news(symbol: str, db: DBDep, limit: int = 5):
+async def get_news(symbol: str, db: DBDep, current_user: CurrentUser, limit: int = 5):
     result = await db.execute(
         select(models.NewsItem)
         .where(models.NewsItem.symbol == symbol.upper())
