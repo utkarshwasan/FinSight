@@ -51,7 +51,6 @@ CREDITS.md
 .agent/
 .agents/
 .githooks/
-docs/INTERVIEW-PREP.md
 docs/RUNBOOK.md
 docs/adr/
 demo/
