@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Newspaper, ChevronDown } from 'lucide-react'
 import api from '@/lib/api'
@@ -14,8 +14,6 @@ interface NewsItem {
   sentiment_score?: number | null
 }
 
-const symbols = ['AAPL', 'TSLA', 'NVDA', 'MSFT']
-
 function sentimentTone(score?: number | null) {
   if (score === null || score === undefined) return 'text-slate-400 bg-slate-800/60 border-slate-700'
   if (score >= 0.3) return 'text-bull bg-bull/10 border-bull/20'
@@ -24,7 +22,22 @@ function sentimentTone(score?: number | null) {
 }
 
 export default function NewsPage() {
+  // Fetch watchlist symbols; fall back to sensible defaults while loading
+  const { data: watchlist = [] } = useQuery<{ id: number; symbol: string }[]>({
+    queryKey: ['watchlist'],
+    queryFn: () => api.get('/watchlist').then((r) => r.data),
+    retry: false,
+  })
+  const symbols = watchlist.length > 0
+    ? watchlist.map((w) => w.symbol)
+    : ['AAPL', 'TSLA', 'NVDA', 'MSFT']
+
   const [symbol, setSymbol] = useState('AAPL')
+
+  // Once watchlist loads, default to first symbol in the list
+  useEffect(() => {
+    if (watchlist.length > 0) setSymbol(watchlist[0].symbol)
+  }, [watchlist])
 
   const { data, isLoading } = useQuery<NewsItem[]>({
     queryKey: ['news', symbol],
