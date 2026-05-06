@@ -301,22 +301,23 @@ async def seed_demo_user(engine=None) -> None:
                             QuoteTick(symbol=symbol, price=round(price, 2), ts=ts)
                         )
 
-        # ── News items (20 items, idempotent by URL) ──────────────────
-        for item in DEMO_NEWS:
-            news_exists = await session.scalar(
-                select(NewsItem).where(NewsItem.url == item["url"])
-            )
-            if not news_exists:
-                session.add(
-                    NewsItem(
-                        symbol=item["symbol"],
-                        headline=item["headline"],
-                        source=item["source"],
-                        url=item["url"],
-                        sentiment_score=item["sentiment_score"],
-                        published_at=item["published_at"],
-                    )
+        # ── News items (Only if DEMO_MODE=1) ─────────────────────────
+        if os.getenv("DEMO_MODE", "0") == "1":
+            for item in DEMO_NEWS:
+                news_exists = await session.scalar(
+                    select(NewsItem).where(NewsItem.url == item["url"])
                 )
+                if not news_exists:
+                    session.add(
+                        NewsItem(
+                            symbol=item["symbol"],
+                            headline=item["headline"],
+                            source=item["source"],
+                            url=item["url"],
+                            sentiment_score=item["sentiment_score"],
+                            published_at=item["published_at"],
+                        )
+                    )
 
         await session.commit()
         print(

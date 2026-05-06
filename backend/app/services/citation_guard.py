@@ -29,6 +29,10 @@ class CitationGuard:
         years = {m.span() for m in _YEAR_PATTERN.finditer(text)}
         list_markers = {m.span() for m in _LIST_MARKER.finditer(text)}
         out: list[Violation] = []
+        # NEW: Skip JSON-like strings entirely to avoid breaking technical payloads (e.g. {"risk_score": 0.5})
+        if text.strip().startswith("{") and text.strip().endswith("}"):
+            return []
+
         for m in _NUMERIC_PATTERN.finditer(text):
             span = m.span()
             # Skip years (e.g., 2024)

@@ -28,7 +28,7 @@ class GeminiClient:
                 )
             return "This is a synthesized demo response from the AI. The market looks interesting today! [1]"
 
-        async def call_gemini():
+        def call_gemini():
             from google import genai
 
             client = genai.Client(api_key=self.api_key)
@@ -38,14 +38,16 @@ class GeminiClient:
             )
             return response.text
 
-        for attempt in range(3):
+        for attempt in range(5):
             try:
                 return await asyncio.to_thread(call_gemini)
             except Exception as e:
-                if attempt < 2:
-                    await asyncio.sleep(1.0 * (2**attempt))
+                if attempt < 4:
+                    wait_time = 5.0 * (2**attempt)
+                    print(f"Gemini error (attempt {attempt+1}/5): {e}. Waiting {wait_time}s...")
+                    await asyncio.sleep(wait_time)
                 else:
-                    print(f"Gemini error after retries: {e}")
+                    print(f"Gemini error after final retry: {e}")
                     # Return valid JSON so downstream parsers in news/risk get sane defaults
                     if "sentiment" in prompt.lower():
                         return json.dumps({"sentiment_score": 0.0, "summary": "AI temporarily unavailable"})
