@@ -2,9 +2,32 @@ import os
 import random
 import json
 import asyncio
+import hashlib
+import time
 from typing import Optional
 
 DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
+
+# 5-minute in-process LRU cache keyed by MD5(prompt)
+_CACHE_TTL = 300  # seconds
+_cache: dict[str, tuple[float, str]] = {}  # key -> (expiry_ts, response)
+
+
+def _cache_get(key: str) -> Optional[str]:
+    entry = _cache.get(key)
+    if entry and entry[0] > time.monotonic():
+        return entry[1]
+    if entry:
+        del _cache[key]
+    return None
+
+
+def _cache_set(key: str, value: str) -> None:
+    # Evict oldest entry if cache exceeds 128 items
+    if len(_cache) >= 128:
+        oldest = min(_cache, key=lambda k: _cache[k][0])
+        del _cache[oldest]
+    _cache[key] = (time.monotonic() + _CACHE_TTL, value)
 
 
 class GeminiClient:
@@ -15,18 +38,24 @@ class GeminiClient:
 
     async def generate_content(self, prompt: str) -> str:
         if DEMO_MODE or not self.api_key:
-            # Fixtures for demo mode
-            if "sentiment" in prompt.lower():
-                score = round(random.uniform(-0.8, 0.8), 2)
-                return json.dumps(
-                    {"sentiment_score": score, "summary": "Demo sentiment summary"}
-                )
+            # Fixtures for demo mode — check risk BEFORE sentiment (risk prompts contain "sentiment" too)
             if "risk" in prompt.lower():
                 score = round(random.uniform(0.1, 0.9), 2)
                 return json.dumps(
                     {"risk_score": score, "reasoning": "Demo risk reasoning"}
                 )
+            if "sentiment" in prompt.lower():
+                score = round(random.uniform(-0.8, 0.8), 2)
+                return json.dumps(
+                    {"sentiment_score": score, "summary": "Demo sentiment summary"}
+                )
             return "This is a synthesized demo response from the AI. The market looks interesting today! [1]"
+
+        # Check cache first
+        cache_key = hashlib.md5(prompt.encode()).hexdigest()
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            return cached
 
         def call_gemini():
             from google import genai
@@ -40,7 +69,9 @@ class GeminiClient:
 
         for attempt in range(5):
             try:
-                return await asyncio.to_thread(call_gemini)
+                result = await asyncio.to_thread(call_gemini)
+                _cache_set(cache_key, result)
+                return result
             except Exception as e:
                 if attempt < 4:
                     wait_time = 5.0 * (2**attempt)
@@ -48,11 +79,11 @@ class GeminiClient:
                     await asyncio.sleep(wait_time)
                 else:
                     print(f"Gemini error after final retry: {e}")
-                    # Return valid JSON so downstream parsers in news/risk get sane defaults
-                    if "sentiment" in prompt.lower():
-                        return json.dumps({"sentiment_score": 0.0, "summary": "AI temporarily unavailable"})
+                    # Check risk BEFORE sentiment — risk prompts contain the word "sentiment"
                     if "risk" in prompt.lower():
                         return json.dumps({"risk_score": 0.5, "reasoning": "AI temporarily unavailable"})
+                    if "sentiment" in prompt.lower():
+                        return json.dumps({"sentiment_score": 0.0, "summary": "AI temporarily unavailable"})
                     return "AI temporarily unavailable; analysis based on available market data only."
 
 
