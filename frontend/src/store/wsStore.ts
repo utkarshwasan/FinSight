@@ -36,14 +36,19 @@ interface AlertEvent {
 
 type WsEvent = QuoteTick & { type: 'quote_tick' } | DagEvent | QueryCompleteEvent | AlertEvent
 
+interface AlertWithId extends AlertEvent {
+  _id: string  // client-side unique id for dismiss
+}
+
 interface WsState {
   connected: boolean
   quoteTicks: Record<string, QuoteTick>
   dagEvents: DagEvent[]
   answersByRun: Record<string, { answer: string; sources: any[]; disclaimer: string }>
-  alerts: AlertEvent[]
+  alerts: AlertWithId[]
   setConnected: (v: boolean) => void
   handleEvent: (event: WsEvent) => void
+  dismissAlert: (id: string) => void
 }
 
 export const useWsStore = create<WsState>((set) => ({
@@ -54,6 +59,9 @@ export const useWsStore = create<WsState>((set) => ({
   alerts: [],
 
   setConnected: (connected) => set({ connected }),
+
+  dismissAlert: (id) =>
+    set((s) => ({ alerts: s.alerts.filter((a) => a._id !== id) })),
 
   handleEvent: (event) => {
     if (event.type === 'quote_tick') {
@@ -74,7 +82,8 @@ export const useWsStore = create<WsState>((set) => ({
         }},
       }))
     } else if (event.type === 'alert') {
-      set((state) => ({ alerts: [...state.alerts.slice(-20), event] }))
+      const _id = `${Date.now()}-${Math.random()}`
+      set((state) => ({ alerts: [...state.alerts.slice(-4), { ...event, _id }] }))
     }
   },
 }))
