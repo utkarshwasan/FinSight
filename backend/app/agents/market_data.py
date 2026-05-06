@@ -2,9 +2,10 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from app.models import QuoteTick
+from app.agents.state import AgentState
 
 
-async def run_market_data_node(state: "AgentState") -> "AgentState":
+async def run_market_data_node(state: AgentState) -> AgentState:
     symbol = state["symbol"]
     session_factory = state.get("_session_factory")
     # NOTE: Do NOT emit dag_events here — the executor wraps every node
