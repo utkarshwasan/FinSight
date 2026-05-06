@@ -8,7 +8,7 @@ const NODES = [
   { id: "MarketData", label: "Fetch",        sub: "yfinance + Finnhub", x: 30,  y: 50  },
   { id: "News",       label: "News",         sub: "Sentiment NER",      x: 220, y: 30  },
   { id: "Forecast",   label: "Forecast",     sub: "Forecast 7d",         x: 220, y: 130 },
-  { id: "Risk",       label: "Synthesize",   sub: "Gemini 2.0 Flash",   x: 410, y: 80  },
+  { id: "Risk",       label: "Synthesize",   sub: "Groq Llama 3.3",     x: 410, y: 80  },
   { id: "Alert",      label: "Cite & Verify",sub: "Citation guard",     x: 600, y: 80  },
 ]
 const EDGES: Array<[string, string]> = [

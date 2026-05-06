@@ -166,11 +166,11 @@ export default function SettingsPage() {
             <div className="mt-6 pt-4 border-t border-[#232c3a]">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-400">Analysis Engine</span>
-                <span className="text-amber-accent font-medium">Gemini 2.0 Flash</span>
+                <span className="text-amber-accent font-medium">Llama 3.3 70B (Groq)</span>
               </div>
               <div className="flex items-center justify-between text-xs mt-2">
                 <span className="text-slate-400">Context Window</span>
-                <span className="text-slate-300">1.0M tokens</span>
+                <span className="text-slate-300">128K tokens</span>
               </div>
               <div className="flex items-center justify-between text-xs mt-2">
                 <span className="text-slate-400">Safety Filters</span>

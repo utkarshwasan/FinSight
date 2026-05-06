@@ -70,7 +70,7 @@ export function AICopilot({ onRun }: Props) {
           </div>
           <h3 className="text-base font-semibold tracking-tight">AI Copilot</h3>
           <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber/10 text-amber-accent border border-amber/20">
-            Gemini · 5-agent DAG
+            Llama 3.3 · 5-agent DAG
           </span>
         </div>
         <p className="text-xs text-slate-500 mt-1.5">

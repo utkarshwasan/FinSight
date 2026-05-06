@@ -38,7 +38,7 @@ def _build_alert_prompt(state: AgentState) -> tuple[str, list[dict]]:
             f"[{n}] 7-day Holt-Winters forecast (MAPE={mape:.2f}%)"
         )
 
-    # Risk score as a numbered source so Gemini can cite it properly
+    # Risk score as a numbered source so the LLM can cite it properly
     risk_n = len(sources) + 1
     sources.append({"n": risk_n, "kind": "risk", "score": risk_score})
     src_lines.append(f"[{risk_n}] Risk assessment: score={risk_score:.2f} (0=safe, 1=high risk)")
