@@ -12,7 +12,6 @@ Gemini API reference: https://ai.google.dev/api/generate-content
 
 import os
 import random
-import json
 import asyncio
 import hashlib
 import httpx
@@ -171,27 +170,29 @@ class GeminiClient:
     # ── Helpers ───────────────────────────────────────────────────────────────
 
     def _demo_fixture(self, prompt: str) -> str:
-        """Return deterministic fixture data — no real API call."""
-        # Check risk BEFORE sentiment: risk prompts contain the word "sentiment"
-        if "risk" in prompt.lower():
-            score = round(random.uniform(0.1, 0.9), 2)
-            return json.dumps({"risk_score": score, "reasoning": "Demo risk reasoning"})
-        if "sentiment" in prompt.lower():
-            score = round(random.uniform(-0.8, 0.8), 2)
-            return json.dumps({"sentiment_score": score, "summary": "Demo sentiment"})
-        return "This is a synthesized demo response from the AI. The market looks interesting today! [1]"
+        """
+        Return a realistic plain-text demo answer for the Alert node.
+        News and Risk nodes no longer call generate_content (TextBlob + formula),
+        so the only caller here is alert.py — which always wants human-readable text.
+        """
+        return (
+            "Recent market data shows steady momentum with broadly positive news sentiment [1]. "
+            "The 7-day forecast indicates stable price action ahead [2], "
+            "and the overall risk level is moderate [3]. "
+            "Monitor position sizing relative to your portfolio. "
+            "Educational use only — not financial advice."
+        )
 
     def _fallback_response(self, prompt: str) -> str:
-        """Safe static fallback when all LLM attempts fail."""
-        if "risk" in prompt.lower():
-            return json.dumps(
-                {"risk_score": 0.5, "reasoning": "AI temporarily unavailable"}
-            )
-        if "sentiment" in prompt.lower():
-            return json.dumps(
-                {"sentiment_score": 0.0, "summary": "AI temporarily unavailable"}
-            )
-        return "AI temporarily unavailable; analysis based on available market data only."
+        """
+        Plain-text fallback when all LLM retry attempts fail.
+        Always returns human-readable text — never JSON.
+        """
+        return (
+            "AI analysis is temporarily unavailable. "
+            "Please review the market data and news items below for context. "
+            "Educational use only — not financial advice."
+        )
 
 
 # Singleton — imported everywhere as `from app.services.gemini_client import gemini_client`

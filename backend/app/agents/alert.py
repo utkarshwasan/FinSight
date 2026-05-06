@@ -71,10 +71,10 @@ async def run_alert_node(state: AgentState) -> AgentState:
     try:
         answer = await gemini_client.generate_content(prompt)
     except Exception as e:
-        print(f"[alert] gemini call failed: {e}")
+        print(f"[alert] LLM call failed: {e}")
         answer = (
-            "Analysis temporarily unavailable. "
-            "Showing market data only. Educational use only — not financial advice."
+            "AI analysis temporarily unavailable. "
+            "Please review market data and news below. Educational use only — not financial advice."
         )
 
     sanitized = CitationGuard.sanitize(answer or "")
