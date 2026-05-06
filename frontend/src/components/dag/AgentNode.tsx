@@ -21,7 +21,7 @@ export default function AgentNode({ data }: { data: { label: string, status: str
 
   return (
     <div className={`relative flex items-center gap-3 px-4 py-2 rounded-xl border ${
-      isRunning ? 'border-#f5b454 bg-amber/10' :
+      isRunning ? 'border-[#f5b454] bg-amber/10' :
       isDone ? 'border-emerald-500/30 bg-slate-900' :
       isError ? 'border-rose-500/50 bg-rose-500/10' :
       isSkipped ? 'border-slate-500/50 bg-slate-500/10' :
@@ -30,7 +30,7 @@ export default function AgentNode({ data }: { data: { label: string, status: str
       
       {/* Pulse ring when running */}
       {isRunning && (
-        <div className="absolute inset-0 -m-1 border border-#f5b454/50 rounded-xl animate-ping opacity-20" />
+        <div className="absolute inset-0 -m-1 border border-[#f5b454]/50 rounded-xl animate-ping opacity-20" />
       )}
       
       <Handle type="target" position={Position.Top} className="w-2 h-2 bg-slate-700 border-none" />

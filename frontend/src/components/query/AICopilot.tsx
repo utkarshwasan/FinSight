@@ -83,7 +83,7 @@ export function AICopilot({ onRun }: Props) {
         <div ref={ref} className="relative">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="h-[50px] px-3.5 rounded-xl bg-[#161d27] border border-[#232c3a] hover:border-border-amber/50 text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
+            className="h-[50px] px-3.5 rounded-xl bg-[#161d27] border border-[#232c3a] hover:border-amber/50 text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
           >
             <span>{symbol}</span>
             <ChevronDown
@@ -135,7 +135,7 @@ export function AICopilot({ onRun }: Props) {
           <button
             key={s}
             onClick={() => setQuery(s)}
-            className="px-2.5 py-1 text-xs text-slate-400 bg-white/[0.03] border border-[#232c3a] rounded-full hover:border-border-amber/50 hover:text-white transition-colors cursor-pointer"
+            className="px-2.5 py-1 text-xs text-slate-400 bg-white/[0.03] border border-[#232c3a] rounded-full hover:border-amber/50 hover:text-white transition-colors cursor-pointer"
           >
             {s}
           </button>

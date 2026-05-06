@@ -130,7 +130,7 @@ export function DAGVisualizer({ runToken, currentRunId }: { runToken: number; cu
                         className={[
                           "h-full w-full rounded-xl border px-2.5 py-2 flex items-center gap-2 bg-[#121821]",
                           st === "running"
-                            ? "border-#f5b454 dag-pulse"
+                            ? "border-[#f5b454] dag-pulse"
                             : st === "done"
                               ? "border-emerald-500/50"
                               : st === "error"

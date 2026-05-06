@@ -58,7 +58,7 @@ export function AddPositionModal({ open, onClose }: { open: boolean; onClose: ()
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
               placeholder="e.g. AAPL"
               maxLength={10}
-              className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-#f5b454 focus:ring-2 focus:ring-amber/20 transition-all uppercase font-semibold"
+              className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/20 transition-all uppercase font-semibold"
             />
           </div>
           <div className="space-y-2">
@@ -69,7 +69,7 @@ export function AddPositionModal({ open, onClose }: { open: boolean; onClose: ()
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="e.g. 25"
-              className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-#f5b454 focus:ring-2 focus:ring-amber/20 transition-all"
+              className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/20 transition-all"
             />
           </div>
           <div className="space-y-2">
@@ -80,7 +80,7 @@ export function AddPositionModal({ open, onClose }: { open: boolean; onClose: ()
               value={avgPrice}
               onChange={(e) => setAvgPrice(e.target.value)}
               placeholder="e.g. 165.40"
-              className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-#f5b454 focus:ring-2 focus:ring-amber/20 transition-all"
+              className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/20 transition-all"
             />
           </div>
         </div>

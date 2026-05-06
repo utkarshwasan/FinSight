@@ -54,7 +54,7 @@ export default function AddPositionForm({ onClose }: { onClose: () => void }) {
               placeholder="e.g. NVDA"
               maxLength={10}
               required
-              className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-#f5b454 focus:ring-2 focus:ring-amber/20 transition-all uppercase font-semibold"
+              className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/20 transition-all uppercase font-semibold"
             />
           </div>
 
@@ -69,7 +69,7 @@ export default function AddPositionForm({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="0.00"
                 required
-                className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-#f5b454 focus:ring-2 focus:ring-amber/20 transition-all font-mono"
+                className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/20 transition-all font-mono"
               />
             </div>
             <div className="space-y-2">
@@ -82,7 +82,7 @@ export default function AddPositionForm({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setAvgPrice(e.target.value)}
                 placeholder="0.00"
                 required
-                className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-#f5b454 focus:ring-2 focus:ring-amber/20 transition-all font-mono"
+                className="w-full px-4 py-3 bg-[#161d27] border border-[#232c3a] rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/20 transition-all font-mono"
               />
             </div>
           </div>
@@ -91,7 +91,7 @@ export default function AddPositionForm({ onClose }: { onClose: () => void }) {
             <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-semibold transition-colors">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-3 bg-[#f5b454] hover:bg-[#f5b454] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-lg shadow-#f5b454/25 flex items-center justify-center gap-2">
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-3 bg-[#f5b454] hover:bg-[#f5b454] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-lg shadow-[#f5b454]/25 flex items-center justify-center gap-2">
               {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Add to Portfolio"}
             </button>
           </div>

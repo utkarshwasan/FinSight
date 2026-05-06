@@ -112,7 +112,7 @@ export function HoldingsCard({ positions, onAdd, initialPrices }: { positions: P
       {positions.length === 0 ? (
         <button
           onClick={onAdd}
-          className="w-full border border-dashed border-[#232c3a] rounded-2xl py-12 flex flex-col items-center gap-2 text-slate-500 hover:text-amber-accent hover:border-border-amber/50 transition-colors cursor-pointer"
+          className="w-full border border-dashed border-[#232c3a] rounded-2xl py-12 flex flex-col items-center gap-2 text-slate-500 hover:text-amber-accent hover:border-amber/50 transition-colors cursor-pointer"
         >
           <Plus size={20} />
           <span className="text-sm">Add your first position</span>
