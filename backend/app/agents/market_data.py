@@ -46,8 +46,11 @@ async def run_market_data_node(state: AgentState) -> AgentState:
             print(f"[MarketData] DB history read failed: {e}")
 
     # 3. Fall back to synthetic if DB empty (e.g., first boot before poller seeds data)
+    is_synthetic = False
     if history_df is None or len(history_df) < 5:
         import random
+        is_synthetic = True
+        print(f"[MarketData] WARNING: insufficient real history for {symbol}, generating synthetic baseline")
 
         prices = []
         p = latest_price
@@ -62,6 +65,7 @@ async def run_market_data_node(state: AgentState) -> AgentState:
     state["market_data"] = {
         "latest_price": latest_price,
         "history_df": history_df,
+        "is_synthetic_history": is_synthetic,
     }
 
     return state
