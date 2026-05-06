@@ -46,7 +46,12 @@ class GeminiClient:
                     await asyncio.sleep(1.0 * (2**attempt))
                 else:
                     print(f"Gemini error after retries: {e}")
-                    return "Error calling AI."
+                    # Return valid JSON so downstream parsers in news/risk get sane defaults
+                    if "sentiment" in prompt.lower():
+                        return json.dumps({"sentiment_score": 0.0, "summary": "AI temporarily unavailable"})
+                    if "risk" in prompt.lower():
+                        return json.dumps({"risk_score": 0.5, "reasoning": "AI temporarily unavailable"})
+                    return "AI temporarily unavailable; analysis based on available market data only."
 
 
 gemini_client = GeminiClient()
