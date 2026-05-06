@@ -1,39 +1,45 @@
-# FinSight AI: Phase 2 Visual Audit Gallery
+# FinSight AI: Phase 3 Production Gallery
 
-This gallery provides the visual context for the **ULTIMATE_PRODUCTION_AUDIT.md**. Use these screenshots to understand the current frontend state, including hardcoded simulations and active bugs.
-
----
-
-### 1. Dashboard (The Main Interface)
-**Issues**: StatCard 0% bug (Price is live, percentage is not). CandleChart is a hardcoded demo.
-![Dashboard Main](dashboard_main.png)
+This gallery provides the visual proof for the **ULTIMATE_PHASE_3_AUDIT.md**. These screenshots confirm the transition to 100% live data, successful AI DAG execution, and production-hardened UI.
 
 ---
 
-### 2. AI Intelligence Failure (Agent DAG)
-**Issues**: Shows the News/Synthesize chain crashing (Red X) after a live query.
-![AI Failure](ai_failure_dag.png)
+### 1. Dashboard (Live Production)
+**Status**: PROD VERIFIED. Real-time WebSocket ticks flowing. StatCard flicker resolved.
+![Dashboard Main](screenshots/dashboard_main.png)
 
 ---
 
-### 3. Markets Page (The Simulation)
-**Issues**: Prices here differ from the dashboard. This page is 100% hardcoded simulation.
-![Markets Page](markets_page.png)
+### 2. AI Intelligence Success (Agent DAG)
+**Status**: PROD VERIFIED. All nodes (Fetch, News, Forecast, Synthesize, Cite) are GREEN.
+![DAG Live](screenshots/dag_live.png)
 
 ---
 
-### 4. News Feed (Stale Data)
-**Issues**: Shows headlines from May 3rd. Live news fetching is blocked by the node crash.
-![News Page](news_page.png)
+### 3. Markets Page (Live Markets)
+**Status**: PROD VERIFIED. Live market data reflected across all symbols. No longer a simulation.
+![Markets Page](screenshots/markets_page.png)
 
 ---
 
-### 5. Holdings (Working Logic)
-**Status**: Real data. Correctly calculating P&L using live WebSocket ticks.
-![Holdings Page](holdings_page.png)
+### 4. News Feed (Real-Time Headlines)
+**Status**: PROD VERIFIED. Demo news purged. Real headlines aggregated via Finnhub.
+![News Page](screenshots/news_page.png)
 
 ---
 
-### 6. Settings (The Placeholder)
-**Status**: Incomplete. Shows "Coming Soon" messages.
-![Settings Page](settings_page.png)
+### 5. Settings (Hardened AI Behavior)
+**Status**: PROD VERIFIED. Explicit "Gemini 2.0 Flash" model visibility and AI behavior toggles.
+![Settings Page](screenshots/settings_page.png)
+
+---
+
+### 6. AI Answer Panel (Cited & Verifiable)
+**Status**: PROD VERIFIED. Citation chips [1] present. Numeric redaction only triggers on uncited claims.
+![Answer Panel](screenshots/answer_panel.png)
+
+---
+
+### 7. Holdings (Live P&L)
+**Status**: PROD VERIFIED. Correctly calculating P&L using live production WebSocket ticks.
+![Holdings Page](screenshots/holdings_page.png)
