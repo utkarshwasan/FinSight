@@ -1,7 +1,28 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { User, Bell, Shield, Database, Sparkles } from "lucide-react"
 import { DashboardShell } from "@/components/layout/DashboardShell"
 import { useAuthStore } from "@/store/authStore"
+
+const SETTINGS_KEY = "finsight.settings.v1"
+
+type SettingsState = {
+  alerts: boolean
+  push: boolean
+  strictCite: boolean
+  forecast7d: boolean
+}
+
+const DEFAULTS: SettingsState = { alerts: true, push: false, strictCite: true, forecast7d: true }
+
+function loadSettings(): SettingsState {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY)
+    if (!raw) return DEFAULTS
+    return { ...DEFAULTS, ...JSON.parse(raw) }
+  } catch {
+    return DEFAULTS
+  }
+}
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -23,22 +44,23 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 }
 
 export default function SettingsPage() {
-  const [alerts, setAlerts] = useState(true)
-  const [push, setPush] = useState(false)
-  const [strictCite, setStrictCite] = useState(true)
-  const [forecast7d, setForecast7d] = useState(true)
-  
+  const [s, setS] = useState<SettingsState>(loadSettings)
+
+  useEffect(() => {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)) } catch { /* ignore */ }
+  }, [s])
+
+  const set = <K extends keyof SettingsState>(k: K) => (v: SettingsState[K]) =>
+    setS((prev) => ({ ...prev, [k]: v }))
+
   const { user } = useAuthStore()
-  const email = user?.email ?? "utkarsh@finsight.ai"
-  const displayName = user?.email ? user.email.split("@")[0] : "Utkarsh W."
-  const initials = user?.email ? user.email[0].toUpperCase() : "UW"
+  const email = user?.email ?? "demo@finsight.ai"
+  const displayName = user?.email ? user.email.split("@")[0] : "Demo"
+  const initials = (user?.email ?? "DE")[0].toUpperCase()
 
   return (
     <DashboardShell title="Settings" subtitle="Personal preferences, alerts and AI behavior">
-      <div className="text-center py-12">
-        <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
-        <p className="text-slate-500">Settings page is under development.</p>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sidebar nav */}
         <aside className="space-y-1">
           {[
@@ -47,18 +69,18 @@ export default function SettingsPage() {
             { label: "AI Behavior", icon: Sparkles },
             { label: "Data Sources", icon: Database },
             { label: "Security", icon: Shield },
-          ].map((s) => (
+          ].map((item) => (
             <button
-              key={s.label}
+              key={item.label}
               className={[
                 "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors cursor-pointer",
-                s.active
+                item.active
                   ? "bg-amber/10 text-amber-accent font-medium"
                   : "text-slate-400 hover:bg-white/5 hover:text-white",
               ].join(" ")}
             >
-              <s.icon size={15} />
-              {s.label}
+              <item.icon size={15} />
+              {item.label}
             </button>
           ))}
         </aside>
@@ -77,9 +99,6 @@ export default function SettingsPage() {
               <div>
                 <div className="text-sm font-semibold">{displayName}</div>
                 <div className="text-xs text-slate-500">{email} · Free tier</div>
-                <button className="mt-2 text-[11px] text-amber-accent hover:underline cursor-pointer">
-                  Upgrade to Pro
-                </button>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -93,6 +112,7 @@ export default function SettingsPage() {
                   <label className="text-xs font-medium text-slate-400">{f.label}</label>
                   <input
                     defaultValue={f.value}
+                    readOnly
                     className="mt-2 w-full px-4 py-2.5 bg-[#1c2532] border border-[#232c3a] rounded-xl text-sm focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/30 transition-all"
                   />
                 </div>
@@ -108,15 +128,15 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-4">
               {[
-                { label: "Price alerts", sub: "Email when a watchlist target is hit", val: alerts, set: setAlerts },
-                { label: "Push notifications", sub: "Browser push for major moves (>5%)", val: push, set: setPush },
+                { label: "Price alerts", sub: "Toast when a watchlist target is hit", val: s.alerts, key: "alerts" as const },
+                { label: "Browser push", sub: "Push for major moves (>5%)", val: s.push, key: "push" as const },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between gap-4">
                   <div>
                     <div className="text-sm font-medium">{row.label}</div>
                     <div className="text-xs text-slate-500 mt-0.5">{row.sub}</div>
                   </div>
-                  <Toggle on={row.val} onChange={row.set} />
+                  <Toggle on={row.val} onChange={set(row.key)} />
                 </div>
               ))}
             </div>
@@ -130,20 +150,21 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-4">
               {[
-                { label: "Strict citation mode", sub: "Decline numeric claims without a verified source", val: strictCite, set: setStrictCite },
-                { label: "7-day Prophet forecast", sub: "Overlay forecast band on candle charts", val: forecast7d, set: setForecast7d },
+                { label: "Strict citation mode", sub: "Decline numeric claims without a verified source", val: s.strictCite, key: "strictCite" as const },
+                { label: "7-day Holt-Winters forecast", sub: "Overlay forecast band on candle charts", val: s.forecast7d, key: "forecast7d" as const },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between gap-4">
                   <div>
                     <div className="text-sm font-medium">{row.label}</div>
                     <div className="text-xs text-slate-500 mt-0.5">{row.sub}</div>
                   </div>
-                  <Toggle on={row.val} onChange={row.set} />
+                  <Toggle on={row.val} onChange={set(row.key)} />
                 </div>
               ))}
             </div>
           </div>
         </div>
+      </div>
     </DashboardShell>
   )
 }
