@@ -89,7 +89,9 @@ export default function OverviewPage() {
             watchlist.map((w) => {
               const live = latestPrices[w.symbol];
               const price = live?.price ?? initialPrices[w.symbol] ?? 0;
-              return <StatCard key={w.id} symbol={w.symbol} price={price} />;
+              const baseline = initialPrices[w.symbol] ?? 0;
+              const change = baseline > 0 && live?.price ? ((live.price - baseline) / baseline) * 100 : 0;
+              return <StatCard key={w.id} symbol={w.symbol} price={price} change={change} />;
             })
           )}
         </section>
@@ -97,7 +99,7 @@ export default function OverviewPage() {
         {/* Two-column row */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <CandleChart />
+            <CandleChart symbol={watchlist[0]?.symbol ?? "AAPL"} />
             <AICopilot
               onRun={(runId?: string) => {
                 setRunToken((n) => n + 1)
@@ -115,7 +117,7 @@ export default function OverviewPage() {
 
         {/* Holdings */}
         <section>
-          <HoldingsCard positions={positions || []} onAdd={() => setModalOpen(true)} />
+          <HoldingsCard positions={positions || []} onAdd={() => setModalOpen(true)} initialPrices={initialPrices} />
         </section>
       </DashboardShell>
 
