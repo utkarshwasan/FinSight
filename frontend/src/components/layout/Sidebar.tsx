@@ -36,7 +36,7 @@ export function Sidebar() {
 
       <nav className="flex-1 px-3 py-4 space-y-1">
         {nav.map((item) => {
-          const isActive = location.pathname === item.href && item.href !== "/" || (item.href === "/" && location.pathname === "/" && item.label === "Overview")
+          const isActive = location.pathname === item.href
           return (
             <Link
               key={item.label}
