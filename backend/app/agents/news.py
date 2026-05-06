@@ -29,57 +29,65 @@ def _parse_sentiment(raw: str) -> float:
 
 
 async def run_news_node(state: AgentState) -> AgentState:
+    """News node: NEVER raises. On any failure, returns state with empty news + sentiment=0.0
+    and logs the cause. Downstream Risk/Alert nodes can run on degraded state."""
     symbol = state["symbol"]
-    news_items = await finnhub_client.get_company_news(symbol)
-
-    if not news_items:
-        state["news"] = []
-        return state
-
-    headlines = [item.get("headline", "") for item in news_items[:5]]
-    headlines_text = "\n".join(headlines)
-
-    prompt = f"""
-    Analyze the sentiment of the following news headlines for {symbol}.
-    Return JSON with a 'sentiment_score' between -1.0 (very negative) and 1.0 (very positive) and a 'summary'.
-    <untrusted_data>
-    {headlines_text}
-    </untrusted_data>
-    """
-
-    result_text = await gemini_client.generate_content(prompt)
+    score = 0.0
+    headlines: list[str] = []
+    sanitized_summary = ""
 
     try:
-        score = _parse_sentiment(result_text)
-    except ValueError as e:
-        print(f"[news] parse failed: {e}")
-        score = 0.0  # graceful default, but logged
+        news_items = await finnhub_client.get_company_news(symbol)
+        headlines = [item.get("headline", "") for item in (news_items or [])[:5] if item.get("headline")]
 
-    # ── Persist to DB ─────────────────────────────────────────────────
+        if headlines:
+            headlines_text = "\n".join(headlines)
+            prompt = f"""
+            Analyze the sentiment of the following news headlines for {symbol}.
+            Return JSON with a 'sentiment_score' between -1.0 (very negative) and 1.0 (very positive) and a 'summary'.
+            <untrusted_data>
+            {headlines_text}
+            </untrusted_data>
+            """
+            try:
+                result_text = await gemini_client.generate_content(prompt)
+                sanitized_summary = CitationGuard.sanitize(result_text or "")
+                try:
+                    score = _parse_sentiment(result_text)
+                except ValueError as e:
+                    print(f"[news] sentiment parse failed: {e}")
+                    score = 0.0
+            except Exception as e:
+                print(f"[news] gemini call failed: {e}")
+                score = 0.0
+                sanitized_summary = ""
+    except Exception as e:
+        print(f"[news] finnhub fetch failed: {e}")
+        headlines = []
+
+    # ── Persist to DB (best-effort, never raises) ─────────────────────
     session_factory = state.get("_session_factory")
     if session_factory and headlines:
         from sqlalchemy import select as sa_select
         from app.models import NewsItem
-
         try:
             async with session_factory() as db_session:
-                for i, headline in enumerate(headlines[:5]):  # persist top 5
-                    # Idempotent: skip if same headline+symbol already stored
+                for headline in headlines[:5]:
+                    truncated = headline[:500]
                     existing = await db_session.scalar(
                         sa_select(NewsItem).where(
                             NewsItem.symbol == symbol,
-                            NewsItem.headline == headline[:500],
+                            NewsItem.headline == truncated,
                         )
                     )
                     if not existing:
-                        # Generate stable URL key from symbol+headline hash (url is NOT NULL)
                         headline_hash = hashlib.md5(
                             f"{symbol}:{headline}".encode()
                         ).hexdigest()[:12]
                         db_session.add(
                             NewsItem(
                                 symbol=symbol,
-                                headline=headline[:500],
+                                headline=truncated,
                                 url=f"https://finnhub.io/news/{symbol}/{headline_hash}",
                                 source="Gemini/Finnhub",
                                 sentiment_score=score,
@@ -88,11 +96,9 @@ async def run_news_node(state: AgentState) -> AgentState:
                         )
                 await db_session.commit()
         except Exception as e:
-            print(f"[News] DB persist failed (non-fatal): {e}")
+            print(f"[news] DB persist failed (non-fatal): {e}")
 
-    # Build state["news"] with headline + url so alert.py can populate sources
-    # alert.py iterates news_items and reads n.get("headline") and n.get("url")
-    sanitized_summary = CitationGuard.sanitize(result_text)
+    # Build state["news"]
     state["news"] = [
         {
             "headline": h,
@@ -100,8 +106,7 @@ async def run_news_node(state: AgentState) -> AgentState:
             "sentiment_score": score,
             "raw": sanitized_summary,
         }
-        for h in (headlines[:3] if headlines else [])
+        for h in headlines[:3]
     ] or [{"sentiment_score": score, "raw": sanitized_summary}]
     state["sentiment"] = score
-
     return state
