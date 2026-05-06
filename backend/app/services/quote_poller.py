@@ -48,9 +48,14 @@ async def fetch_price(symbol: str) -> Optional[float]:
                 return None
 
 
-async def poll_loop(symbols: list[str]):
-    """Background polling loop. Runs in the worker process."""
-    print(f"[Poller] Starting loop for {symbols}...")
+async def poll_loop(seed_symbols: list[str]):
+    """Background polling loop. Runs in the worker process.
+
+    Polls the UNION of `seed_symbols` plus every symbol in any user's watchlist
+    or positions table — so adding "AMZN" to a watchlist starts producing live
+    ticks within one POLL_INTERVAL.
+    """
+    print(f"[Poller] Starting loop with seed {seed_symbols}...")
     from app.services.ws_hub import ws_hub
 
     engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
@@ -58,7 +63,19 @@ async def poll_loop(symbols: list[str]):
         engine, expire_on_commit=False, class_=AsyncSession
     )
 
-    from app.models import QuoteTick
+    from app.models import QuoteTick, WatchlistItem, Position
+
+    async def _resolve_symbols() -> list[str]:
+        """Union of seed + every user's watchlist + every user's positions."""
+        try:
+            async with SessionLocal() as s:
+                wl = (await s.execute(select(WatchlistItem.symbol).distinct())).scalars().all()
+                pos = (await s.execute(select(Position.symbol).distinct())).scalars().all()
+            merged = set(seed_symbols) | set(wl) | set(pos)
+            return sorted(s for s in merged if s)
+        except Exception as e:
+            print(f"[Poller] symbol resolve failed: {e}; using seed list")
+            return seed_symbols
 
     async def _check_alerts(symbol: str, price: float) -> None:
         """Check position thresholds and fire alert events."""
@@ -102,6 +119,7 @@ async def poll_loop(symbols: list[str]):
             print(f"[AlertCheck] {e}")
 
     while True:
+        symbols = await _resolve_symbols()
         async with SessionLocal() as db:
             for symbol in symbols:
                 price = await fetch_price(symbol)
