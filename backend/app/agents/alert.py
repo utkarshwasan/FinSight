@@ -60,7 +60,14 @@ async def run_alert_node(state: AgentState) -> AgentState:
     state["alert_triggered"] = risk_score > 0.8
 
     prompt, sources = _build_alert_prompt(state)
-    answer = await gemini_client.generate_content(prompt)
+    try:
+        answer = await gemini_client.generate_content(prompt)
+    except Exception as e:
+        print(f"[alert] gemini call failed: {e}")
+        answer = (
+            "Analysis unavailable due to a temporary AI service issue. "
+            "Showing market data only. Educational use only — not financial advice."
+        )
     state["answer"] = CitationGuard.sanitize(answer or "")
     state["sources"] = sources
 
