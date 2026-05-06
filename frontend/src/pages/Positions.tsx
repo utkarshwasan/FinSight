@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import api from '@/lib/api'
@@ -21,9 +21,28 @@ export default function PositionsPage() {
     queryFn: () => api.get('/positions').then((r) => r.data),
   })
 
+  const [initialPrices, setInitialPrices] = useState<Record<string, number>>({})
+  useEffect(() => {
+    if (!data || data.length === 0) return
+    let cancelled = false
+    Promise.all(
+      data.map((p) =>
+        api.get(`/quotes/${p.symbol}/latest`)
+          .then((r) => [p.symbol, r.data.price as number] as const)
+          .catch(() => [p.symbol, p.average_price] as const)
+      )
+    ).then((entries) => {
+      if (cancelled) return
+      const next: Record<string, number> = {}
+      for (const [s, price] of entries) next[s] = price
+      setInitialPrices(next)
+    })
+    return () => { cancelled = true }
+  }, [data])
+
   return (
-    <DashboardShell 
-      title="Holdings" 
+    <DashboardShell
+      title="Holdings"
       subtitle="Manage holdings and monitor live portfolio P&L."
       actions={
         <button
@@ -42,7 +61,7 @@ export default function PositionsPage() {
           <div className="shimmer h-40 rounded-xl w-full" />
         </div>
       ) : (
-        <HoldingsCard positions={data || []} onAdd={() => setShowAddPosition(true)} />
+        <HoldingsCard positions={data || []} onAdd={() => setShowAddPosition(true)} initialPrices={initialPrices} />
       )}
     </DashboardShell>
   )

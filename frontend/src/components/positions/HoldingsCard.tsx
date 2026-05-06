@@ -11,9 +11,9 @@ interface Position {
   average_price: number
 }
 
-function Row({ p, onDelete }: { p: Position; onDelete: () => void }) {
+function Row({ p, onDelete, initialPrices }: { p: Position; onDelete: () => void; initialPrices?: Record<string, number> }) {
   const quoteTicks = useWsStore((s) => s.quoteTicks) as Record<string, { price: number }>
-  const livePrice = quoteTicks[p.symbol]?.price ?? p.average_price
+  const livePrice = quoteTicks[p.symbol]?.price ?? initialPrices?.[p.symbol] ?? p.average_price
   const [flash, setFlash] = useState<"up" | "down" | null>(null)
   const prev = useRef(livePrice)
 
@@ -66,7 +66,7 @@ function Row({ p, onDelete }: { p: Position; onDelete: () => void }) {
   )
 }
 
-export function HoldingsCard({ positions, onAdd }: { positions: Position[]; onAdd: () => void }) {
+export function HoldingsCard({ positions, onAdd, initialPrices }: { positions: Position[]; onAdd: () => void; initialPrices?: Record<string, number> }) {
   const queryClient = useQueryClient()
   const quoteTicks = useWsStore((s) => s.quoteTicks) as Record<string, { price: number }>
 
@@ -81,14 +81,14 @@ export function HoldingsCard({ positions, onAdd }: { positions: Position[]; onAd
 
   const { totalValue, pl, plPct, up } = useMemo(() => {
     const totalValue = positions.reduce((s, p) => {
-      const price = quoteTicks[p.symbol]?.price ?? p.average_price
+      const price = quoteTicks[p.symbol]?.price ?? initialPrices?.[p.symbol] ?? p.average_price
       return s + p.quantity * price
     }, 0)
     const totalCost = positions.reduce((s, p) => s + p.quantity * p.average_price, 0)
     const pl = totalValue - totalCost
     const plPct = totalCost ? (pl / totalCost) * 100 : 0
     return { totalValue, pl, plPct, up: pl >= 0 }
-  }, [positions, quoteTicks])
+  }, [positions, quoteTicks, initialPrices])
 
   return (
     <div className="bg-[#121821] rounded-2xl border border-[#232c3a] p-6">
@@ -120,7 +120,7 @@ export function HoldingsCard({ positions, onAdd }: { positions: Position[]; onAd
       ) : (
         <div className="space-y-2">
           {positions.map((p) => (
-            <Row key={p.id} p={p} onDelete={() => handleDelete(p.id)} />
+            <Row key={p.id} p={p} onDelete={() => handleDelete(p.id)} initialPrices={initialPrices} />
           ))}
         </div>
       )}
