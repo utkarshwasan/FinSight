@@ -117,7 +117,7 @@ export function AICopilot({ onRun }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
             placeholder="Ask about a ticker, trend, or forecast…"
-            className="w-full h-[50px] pl-12 pr-36 rounded-xl bg-[#161d27] border border-[#232c3a] text-sm placeholder:text-slate-600 focus:outline-none focus:border-#f5b454 focus:ring-2 focus:ring-amber/20 transition-all"
+            className="w-full h-[50px] pl-12 pr-36 rounded-xl bg-[#161d27] border border-[#232c3a] text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#f5b454] focus:ring-2 focus:ring-amber/20 transition-all"
           />
           <button
             onClick={submit}
