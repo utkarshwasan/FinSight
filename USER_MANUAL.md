@@ -78,7 +78,11 @@ If you prefer to run the project without Docker (e.g., for faster hot-reloads or
     ```bash
     uv run alembic upgrade head
     ```
-4.  **Start Server**:
+4.  **Seed Demo Data** (Optional but recommended):
+    ```bash
+    uv run python -m app.scripts.seed_demo
+    ```
+5.  **Start Server**:
     ```bash
     uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ```

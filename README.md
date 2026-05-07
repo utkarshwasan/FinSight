@@ -116,6 +116,7 @@ Password: Demo@12345
 cd backend
 uv sync
 uv run alembic upgrade head
+uv run python -m app.scripts.seed_demo
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
