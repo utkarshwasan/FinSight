@@ -63,12 +63,19 @@ If you prefer to run the project without Docker (e.g., for faster hot-reloads or
     ```sql
     CREATE EXTENSION IF NOT EXISTS timescaledb;
     ```
+    > [!IMPORTANT]
+    > If you cannot install the `timescaledb` extension on your local machine, the app will still work but high-performance time-series features and some migrations will fail. We highly recommend using the Docker setup in this case.
 
 ### C. Backend Setup
 1.  **Install `uv`** (Recommended Python manager):
-    ```bash
-    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-    ```
+    - **Windows**:
+      ```powershell
+      powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+      ```
+    - **Linux/macOS**:
+      ```bash
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+      ```
 2.  **Sync Dependencies**:
     ```bash
     cd backend
@@ -88,7 +95,11 @@ If you prefer to run the project without Docker (e.g., for faster hot-reloads or
     ```
 
 ### D. Frontend Setup
-1.  **Install Dependencies**:
+1.  **Install `pnpm`** (if not present):
+    ```bash
+    npm install -g pnpm
+    ```
+2.  **Install Dependencies**:
     ```bash
     cd frontend
     pnpm install

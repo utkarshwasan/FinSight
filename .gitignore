@@ -57,6 +57,7 @@ demo/
 restructure.py
 query.json
 *.png
+!screenshots/*.png
 *.jpg
 *.jpeg
 *.gif
