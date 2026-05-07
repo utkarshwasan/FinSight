@@ -290,3 +290,5 @@ FinSight/
 | LLM Provider   | Groq + Gemini              | Dual-provider support ensures 99.9% AI availability.            |
 
 **Built for the future of verifiable financial intelligence.**
+
+### 🎥 [Video Walkthrough](https://drive.google.com/file/d/1y0cTd8zgj5txrlBNEhxCIQYn_hESV-J5/view?usp=sharing)
