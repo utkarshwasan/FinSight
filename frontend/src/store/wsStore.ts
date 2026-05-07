@@ -65,6 +65,7 @@ export const useWsStore = create<WsState>((set) => ({
 
   handleEvent: (event) => {
     if (event.type === 'quote_tick') {
+      console.log('Received quote_tick:', event);
       set((state) => ({
         quoteTicks: {
           ...state.quoteTicks,

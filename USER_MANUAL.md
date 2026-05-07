@@ -65,40 +65,124 @@ FinSight AI solves this with:
 ### C. The Agent DAG (Trust & Transparency)
 - **Problem Solved**: "Hallucinations" and "Black Box" reasoning.
 - **What it is**: As the AI thinks, the **Agent DAG** visualizes the 5 nodes:
-    1.  **Fetch**: Pulls live price and fundamental data.
-    2.  **News**: Scrapes latest headlines and social sentiment.
-    3.  **Forecast**: Runs statistical models for price projection.
-    4.  **Synthesize**: Cross-references all findings into a coherent report.
-    5.  **Verify**: The "Police" node that kills the response if a claim lacks a citation.
+    1.  **MarketData**: Pulls live price and OHLCV history from `yfinance`.
+    2.  **News**: Aggregates latest headlines and sentiment from **Finnhub**.
+    3.  **Forecast**: Runs Holt-Winters statistical models for 7-day price projection.
+    4.  **Risk**: Scores 0.0–1.0 risk using **Groq (Llama 3.3 70B)** or **Gemini 2.0 Flash**.
+    5.  **Alert**: Final synthesis with human-readable advice and citation enforcement.
 
 ### D. CitationGuard
 - **Problem Solved**: Inaccurate data.
 - **Mechanism**: Every numeric claim (e.g., "AAPL is up 2.4%") must have a corresponding citation tag. If the AI hallucinates a number, CitationGuard catches it before you ever see it.
 
+### E. Smart Alerts
+- **Problem Solved**: Manually monitoring price thresholds.
+- **How it Works**: Set an alert threshold on any position. When the live price crosses your target, a notification toast appears instantly via WebSocket, even if you're on a different page.
+
 ---
 
-## 4. Advanced Configuration (Phase 2)
+## 4. Live Configuration (Production Mode)
 
 To transition from Demo data to Live Production data:
-1.  Set `DEMO_MODE=0` in `.env`.
-2.  Add your `GEMINI_API_KEY` (from Google AI Studio).
-3.  Add your `FINNHUB_API_KEY` (from Finnhub.io).
-4.  Restart the containers: `docker compose up -d`.
+
+### Step 1: Configure `.env`
+Set the following variables in your `.env` file:
+
+```dotenv
+DEMO_MODE=0
+SEED_DEMO_USER=1
+RUN_POLLER=1
+
+# Primary AI Provider: Groq (Llama 3.3 70B)
+GROQ_API_KEY=gsk_...          # Get from https://console.groq.com/keys
+
+# Fallback AI Provider: Gemini 2.0 Flash
+GEMINI_API_KEY=AIza...         # Get from https://aistudio.google.com/app/apikey
+
+# Market News & Sentiment
+FINNHUB_API_KEY=...            # Get from https://finnhub.io/register
+
+# Security
+JWT_SECRET=...                 # Generate: python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### Step 2: Restart the Containers
+```bash
+docker compose down
+docker compose up --build -d
+```
+
+### Step 3: Verify Live Data
+1. Login to the dashboard at `http://localhost:5173`.
+2. Watch the StatCards "flash" green/red every 15 seconds as live prices stream in.
+3. Open AI Copilot and run a query like *"What is the news sentiment for NVDA?"*.
+4. Verify the DAG executes with real data (check the 5 nodes lighting up in sequence).
 
 ---
 
-## 5. Troubleshooting
+## 5. API Endpoints Reference
 
-- **StatCards show $0.00**: Ensure the `backend` container is running and healthy. The system fetches initial prices on load and then waits for the 15s ticker pulse.
-- **DAG is stuck on "Fetch"**: Check your internet connection. In Demo Mode, this usually clears in 2-3 seconds.
-- **Login Failed**: Ensure you have run the seeding script (automatic on first launch). If not, run:
-  ```bash
-  docker compose exec backend uv run python -m app.scripts.seed_demo
-  ```
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/auth/register` | — | Create account |
+| `POST` | `/auth/login` | — | Email/password → JWT |
+| `GET` | `/auth/google` | — | Google OAuth redirect |
+| `GET` | `/watchlist` | JWT | List watchlist symbols |
+| `POST` | `/watchlist` | JWT | Add symbol |
+| `DELETE` | `/watchlist/{id}` | JWT | Remove symbol |
+| `GET` | `/positions` | JWT | List positions with live P&L |
+| `POST` | `/positions` | JWT | Open position |
+| `DELETE` | `/positions/{id}` | JWT | Close position |
+| `GET` | `/quotes/{symbol}/latest` | JWT | Latest price tick |
+| `GET` | `/quotes/{symbol}/history` | JWT | OHLCV history |
+| `GET` | `/news/{symbol}` | JWT | Recent news + sentiment |
+| `POST` | `/query/` | JWT | Submit NL query → DAG run |
+| `GET` | `/audit` | JWT | Audit event log |
+| `WS` | `/ws?token=<jwt>` | JWT | Real-time ticks + DAG events |
+| `GET` | `/healthz` | — | Liveness check |
 
 ---
 
-## 6. Project Philosophy
+## 6. Hardened Production Features
+
+- **AI Resilience**: 5-tier exponential backoff (5s, 10s, 20s, 40s, 80s) for 429 "Rate Limit" errors in both Groq and Gemini clients.
+- **Auth Hardening**: Global Axios interceptor handles 401/403 errors by clearing session storage and redirecting to login, preventing infinite loop "deadlocks".
+- **Live Data Poller**: `quote_poller.py` fetches high-frequency ticks from `yfinance` every 15s and broadcasts them via WebSockets to all connected clients.
+- **Time-Series Engine**: `quote_ticks` are stored in a **TimescaleDB hypertable** for efficient historical rendering and Holt-Winters forecasting.
+- **Citation Enforcement**: Backend `CitationGuard` validates all LLM output before it is sent to the frontend. Any numeric claim without a `[citation]` is redacted.
+- **Demo Mode**: Full fixture replay for offline development — no external API calls required.
+
+---
+
+## 7. Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| StatCards show `$0.00` | Backend not healthy | Check `docker compose ps` and restart with `docker compose up -d` |
+| StatCards flash but prices don't change | Poller not running | Verify `RUN_POLLER=1` in `.env` |
+| DAG stuck on "Fetch" | Network / rate limit | Check API keys are valid; wait 60s and retry |
+| AI Copilot returns degraded answer | LLM provider down | System auto-switches between Groq and Gemini; check logs |
+| Login redirects to login page | Expired JWT | Clear browser localStorage; re-login |
+| AlertToast not firing | Threshold not set | Set alert threshold in Positions page |
+
+### Diagnostic Commands
+```bash
+# View backend logs
+docker compose logs -f backend
+
+# View frontend logs
+docker compose logs -f frontend
+
+# Restart a specific service
+docker compose restart backend
+
+# Run seeding script manually
+docker compose exec backend uv run python -m app.scripts.seed_demo
+```
+
+---
+
+## 8. Project Philosophy
 FinSight AI is built to be **Modular** and **Agentic**. Each node in our DAG is an independent worker, allowing you to swap "News" for a "Social Media" scraper or "Forecast" for a "Quantum Model" without breaking the rest of the pipeline.
 
 **Built for the future of decentralized, verifiable financial intelligence.**
