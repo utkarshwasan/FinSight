@@ -20,7 +20,7 @@ services:
       context: ./backend
       dockerfile: ../Dockerfile.backend
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/finsight
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - FINNHUB_API_KEY=${FINNHUB_API_KEY}
       - JWT_SECRET=${JWT_SECRET}
