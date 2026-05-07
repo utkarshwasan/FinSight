@@ -9,7 +9,7 @@ import { useState } from 'react'
 
 const features = [
   { icon: Activity, label: "Real-Time Data",    desc: "Live market ticks every 15s via WebSocket" },
-  { icon: TrendingUp, label: "AI Forecasting",  desc: "Prophet + Llama 3.3 7-day price projections" },
+  { icon: TrendingUp, label: "AI Forecasting",  desc: "Prophet + Gemini 7-day price projections" },
   { icon: Shield,   label: "Risk Analysis",     desc: "Multi-node DAG risk scoring engine" },
 ]
 

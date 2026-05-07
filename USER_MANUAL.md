@@ -46,6 +46,57 @@ FinSight AI solves this with:
 
 ---
 
+## 2.1. Advanced: Manual Setup (Non-Docker)
+
+If you prefer to run the project without Docker (e.g., for faster hot-reloads or specific debugging), follow these steps.
+
+### A. System Requirements
+- **Python 3.12+**
+- **Node.js 20+**
+- **pnpm** (Install via `npm install -g pnpm`)
+- **PostgreSQL 15+** with the **TimescaleDB Extension** installed.
+
+### B. Database Preparation
+1.  Ensure Postgres is running.
+2.  Create a database named `finsight`.
+3.  Execute the following SQL to enable the time-series engine:
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS timescaledb;
+    ```
+
+### C. Backend Setup
+1.  **Install `uv`** (Recommended Python manager):
+    ```bash
+    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
+2.  **Sync Dependencies**:
+    ```bash
+    cd backend
+    uv sync
+    ```
+3.  **Run Migrations**:
+    ```bash
+    uv run alembic upgrade head
+    ```
+4.  **Start Server**:
+    ```bash
+    uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ```
+
+### D. Frontend Setup
+1.  **Install Dependencies**:
+    ```bash
+    cd frontend
+    pnpm install
+    ```
+2.  **Start Dev Server**:
+    ```bash
+    pnpm dev
+    ```
+    The frontend will be available at `http://localhost:5173`.
+
+---
+
 ## 3. Core Features & Problem Solving
 
 ### A. The Dashboard (Market Awareness)

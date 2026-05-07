@@ -19,7 +19,6 @@ export default function OverviewPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [runToken, setRunToken] = useState(0)
   const [currentRunId, setCurrentRunId] = useState<string | null>(null)
-  const [chartSymbol, setChartSymbol] = useState<string | null>(null)
 
   const { data: watchlist = [], isLoading } = useWatchlist()
   const addItem = useAddWatchlistItem()
@@ -100,29 +99,7 @@ export default function OverviewPage() {
         {/* Two-column row */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            {/* Chart symbol picker */}
-            {watchlist.length > 1 && (
-              <div className="flex gap-1.5 flex-wrap">
-                {watchlist.map((w) => {
-                  const active = (chartSymbol ?? watchlist[0]?.symbol) === w.symbol
-                  return (
-                    <button
-                      key={w.symbol}
-                      onClick={() => setChartSymbol(w.symbol)}
-                      className={[
-                        "px-3 py-1 text-xs rounded-lg font-medium transition-colors cursor-pointer",
-                        active
-                          ? "bg-[#f5b454] text-[#1a1207]"
-                          : "bg-white/[0.04] text-slate-400 border border-[#232c3a] hover:border-amber/50 hover:text-white",
-                      ].join(" ")}
-                    >
-                      {w.symbol}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-            <CandleChart symbol={chartSymbol ?? watchlist[0]?.symbol ?? "AAPL"} />
+            <CandleChart symbol={watchlist[0]?.symbol ?? "AAPL"} />
             <AICopilot
               onRun={(runId?: string) => {
                 setRunToken((n) => n + 1)

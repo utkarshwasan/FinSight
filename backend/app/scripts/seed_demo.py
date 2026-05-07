@@ -285,24 +285,18 @@ async def seed_demo_user(engine=None) -> None:
                 )
 
         # ── Quote ticks (30-day history, idempotent) ──────────────────
-        # Set RESEED_QUOTES=1 to wipe and re-seed prices (fixes drift from ±2% bug).
-        reseed = os.getenv("RESEED_QUOTES", "0") == "1"
         now = datetime.now(timezone.utc)
         for symbol, base_price in DEMO_PRICES.items():
+            # Only insert if symbol has no historical rows at all
             existing_tick = await session.scalar(
                 select(QuoteTick).where(QuoteTick.symbol == symbol).limit(1)
             )
-            if reseed and existing_tick is not None:
-                from sqlalchemy import delete as sa_delete
-                await session.execute(sa_delete(QuoteTick).where(QuoteTick.symbol == symbol))
-                await session.flush()
-                existing_tick = None
             if existing_tick is None:
                 price = base_price
                 for days_ago in range(30, 0, -1):
                     for hour in [9, 12, 15]:
                         ts = now - timedelta(days=days_ago, hours=-hour)
-                        price = price * (1 + random.uniform(-0.005, 0.005))
+                        price = price * (1 + random.uniform(-0.02, 0.02))
                         session.add(
                             QuoteTick(symbol=symbol, price=round(price, 2), ts=ts)
                         )

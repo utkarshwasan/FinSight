@@ -10,11 +10,7 @@ router = APIRouter()
 async def get_news(symbol: str, db: DBDep, current_user: CurrentUser, limit: int = 5):
     result = await db.execute(
         select(models.NewsItem)
-        .where(
-            models.NewsItem.symbol == symbol.upper(),
-            # Filter out placeholder/ghost records from old Gemini/Finnhub source label
-            models.NewsItem.source != "Gemini/Finnhub",
-        )
+        .where(models.NewsItem.symbol == symbol.upper())
         .order_by(desc(models.NewsItem.published_at))
         .limit(limit)
     )

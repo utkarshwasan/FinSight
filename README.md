@@ -98,33 +98,33 @@ Password: Demo@12345
 
 ## Local Development (without Docker)
 
-### Backend
+### Prerequisites
 
-**Requirements:** Python 3.12+, [uv](https://docs.astral.sh/uv/), running Postgres with TimescaleDB
+- **Python 3.12+** & [uv](https://docs.astral.sh/uv/)
+- **Node.js 20+** & **pnpm**
+- **PostgreSQL 15+** with [TimescaleDB extension](https://docs.timescale.com/self-hosted/latest/install/)
+
+### 1. Database Setup
+
+1.  Create a Postgres database named `finsight`.
+2.  Enable TimescaleDB: `CREATE EXTENSION IF NOT EXISTS timescaledb;`.
+3.  Ensure your `DATABASE_URL` in `.env` reflects your local credentials.
+
+### 2. Backend Setup
 
 ```bash
 cd backend
-
-# Install dependencies
 uv sync
-
-# Run migrations
 uv run alembic upgrade head
-
-# Start server (hot-reload)
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-### Frontend
-
-**Requirements:** Node 20+, pnpm
+### 3. Frontend Setup
 
 ```bash
-# Install dependencies
-pnpm --dir frontend install
-
-# Start dev server (hot-reload)
-pnpm --dir frontend dev
+cd frontend
+pnpm install
+pnpm dev
 ```
 
 Frontend runs on http://localhost:5173 and proxies `/api/*` to `:8000`.

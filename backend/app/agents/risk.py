@@ -1,39 +1,63 @@
 from app.agents.state import AgentState
+from app.services.gemini_client import gemini_client
+from app.services.citation_guard import CitationGuard
+import json
+import re
 
 
-def _compute_risk(sentiment: float, mape: float) -> float:
-    """Deterministic risk formula — no API call needed.
-
-    sentiment: -1.0 (bearish) .. +1.0 (bullish)
-    mape:      0.0 = perfect forecast .. higher = more uncertain
-
-    risk = 0.65 * sentiment_component + 0.35 * forecast_component
-      sentiment_component: maps [-1,+1] → [1,0]  (bad sentiment = high risk)
-      forecast_component:  mape/50 capped at 1.0  (high forecast error = high risk)
-    """
-    sentiment_component = (-sentiment + 1.0) / 2.0          # 0.0 (bullish) → 1.0 (bearish)
-    forecast_component = min(abs(mape) / 50.0, 1.0)         # 50% MAPE → max risk
-    score = 0.65 * sentiment_component + 0.35 * forecast_component
-    return round(max(0.0, min(1.0, score)), 4)
+def _parse_risk_score(raw: str) -> float:
+    cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw.strip(), flags=re.MULTILINE)
+    try:
+        data = json.loads(cleaned)
+        score = float(data["risk_score"])
+    except (json.JSONDecodeError, KeyError, TypeError):
+        m = re.search(r'"risk_score"\s*:\s*(\d+(?:\.\d+)?)', cleaned)
+        if not m:
+            raise ValueError(f"Could not parse risk_score from: {raw[:200]}")
+        score = float(m.group(1))
+    if not 0.0 <= score <= 1.0:
+        raise ValueError(f"risk_score out of range: {score}")
+    return score
 
 
 async def run_risk_node(state: AgentState) -> AgentState:
-    """Risk node: NEVER raises. Deterministic formula — zero API calls."""
-    news_data = state.get("news") or []
+    """Risk node: NEVER raises. Defaults to risk_score=0.5 on any failure."""
+    symbol = state["symbol"]
+    news_data = state.get("news", []) or []
     sentiment = 0.0
     if news_data:
-        sentiment = float(news_data[0].get("sentiment_score", 0.0))
+        sentiment = news_data[0].get("sentiment_score", 0.0)
 
-    forecast_data = state.get("forecast") or {}
-    mape = float(forecast_data.get("mape", 10.0))  # default 10% MAPE if unknown
-
-    score = _compute_risk(sentiment, mape)
-    reasoning = (
-        f"Deterministic formula: sentiment={sentiment:.4f}, mape={mape:.2f}% → "
-        f"risk_score={score:.4f} "
-        f"(65% sentiment weight + 35% forecast uncertainty weight)"
+    forecast_data = state.get("forecast", {}) or {}
+    forecast_json = json.dumps(
+        {k: v for k, v in forecast_data.items() if k != "forecast"},
+        default=str
     )
 
+    prompt = f"""
+    Given the following data for {symbol}:
+    Sentiment Score: {sentiment}
+    Forecast summary: {forecast_json}
+
+    Calculate a risk score between 0.0 (safe) and 1.0 (very risky).
+    Return JSON with 'risk_score' and 'reasoning'.
+    """
+
+    score = 0.5  # default
+    sanitized = ""
+    try:
+        result = await gemini_client.generate_content(prompt)
+        sanitized = CitationGuard.sanitize(result or "")
+        try:
+            score = _parse_risk_score(result)
+        except ValueError as e:
+            print(f"[risk] parse failed: {e}")
+            score = 0.5
+    except Exception as e:
+        print(f"[risk] gemini call failed: {e}")
+        score = 0.5
+        sanitized = ""
+
+    state["risk_reasoning"] = sanitized
     state["risk_score"] = score
-    state["risk_reasoning"] = reasoning
     return state

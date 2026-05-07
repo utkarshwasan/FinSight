@@ -20,7 +20,7 @@
     1. **MarketData**: Fetches price, history, and fundamentals.
     2. **News**: Aggregates headlines and sentiment via Finnhub.
     3. **Forecast**: Runs Holt-Winters statistical models for 7-day projections.
-    4. **Risk**: Groq (Llama 3.3 70B) or Gemini 2.0 scoring based on market volatility and news sentiment.
+    4. **Risk**: Gemini 2.0 / Groq scoring based on market volatility and news sentiment.
     5. **Alert**: Final synthesis with human-readable advice and citation enforcement.
 - **Transparency**: Live streaming of node status, token usage, and latency.
 
